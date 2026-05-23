@@ -78,7 +78,11 @@ export default function AdminLogin() {
       const result = await signInWithPopup(auth, provider);
       await handleAdminAuthSuccess(result.user.email, result.user.uid);
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') return;
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      if (err.code === 'auth/popup-blocked') {
+        setError('تم حظر النافذة المنبثقة من قبل المتصفح. يرجى السماح بالنوافذ المنبثقة في إعدادات متصفحك وإعادة المحاولة.');
+        return;
+      }
       console.error(err);
       setError('فشل تسجيل الدخول عبر Google');
     } finally {

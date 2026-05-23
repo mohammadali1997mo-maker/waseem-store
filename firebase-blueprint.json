@@ -10,9 +10,10 @@
         "name": { "type": "string" },
         "referralCode": { "type": "string" },
         "lastActive": { "type": "string", "format": "date-time" },
-        "registeredAt": { "type": "string", "format": "date-time" }
+        "registeredAt": { "type": "string", "format": "date-time" },
+        "method": { "type": "string" }
       },
-      "required": ["uid", "email", "name", "referralCode"]
+      "required": ["uid", "email", "name", "referralCode", "lastActive", "registeredAt", "method"]
     },
     "Invoice": {
       "title": "Invoice",

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
+import { db } from "../lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 const apps = [
   { name: 'سول شيل', diamonds: 1000, price: 1.77, category: 'chat', icon: '💎', color: 'from-blue-500 to-purple-500' },
@@ -130,16 +132,35 @@ export default function SoulShell() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const [search, setSearch] = useState("");
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
-  const [quantities, setQuantities] = useState<Record<number, number>>(
-    apps.reduce((acc, _, idx) => ({ ...acc, [idx]: 1000 }), {})
-  );
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    // Set initial quantities
+    setQuantities(apps.reduce((acc, _, idx) => ({ ...acc, [idx]: 1000 }), {}));
+
     trackSectionVisit("تطبيقات الدردشة (SoulShell)");
     const handleCurrencyChange = () => setCurrency(getCurrency());
     window.addEventListener('currencyChange', handleCurrencyChange);
-    return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+
+    // Watch for custom prices
+    const unsubPrices = onSnapshot(collection(db, 'prices'), (snapshot) => {
+      const pm: Record<string, number> = {};
+      snapshot.docs.forEach(doc => {
+        pm[doc.id] = doc.data().price;
+      });
+      setCustomPrices(pm);
+    });
+
+    return () => {
+      window.removeEventListener('currencyChange', handleCurrencyChange);
+      unsubPrices();
+    };
   }, []);
+
+  const getDocPrice = (app: any) => {
+    return customPrices[app.name] !== undefined ? customPrices[app.name] : app.price;
+  };
 
   const toggleCurrency = () => {
     const newCurrency = currency === 'USD' ? 'SYP' : 'USD';
@@ -159,7 +180,8 @@ export default function SoulShell() {
 
   const handleChargeClick = (app: any, index: number) => {
     const qty = quantities[index] || app.diamonds;
-    const price = ((app.price / app.diamonds) * qty).toFixed(2);
+    const activePrice = getDocPrice(app);
+    const price = ((activePrice / app.diamonds) * qty).toFixed(2);
     setSelectedApp({ ...app, qty, price });
     setIsModalOpen(true);
   };
@@ -227,7 +249,8 @@ export default function SoulShell() {
           {filteredApps.map((app, idx) => {
             const originalIndex = apps.indexOf(app);
             const qty = quantities[originalIndex] || app.diamonds;
-            const totalPrice = ((app.price / app.diamonds) * qty).toFixed(2);
+            const activePrice = getDocPrice(app);
+            const totalPrice = ((activePrice / app.diamonds) * qty).toFixed(2);
 
             return (
               <motion.div
@@ -241,7 +264,7 @@ export default function SoulShell() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{app.name}</h3>
                 <p className="text-white/60 text-sm mb-4">
-                  {app.diamonds} قطعة - {formatPrice(app.price, currency)}
+                  {app.diamonds} قطعة - {formatPrice(activePrice, currency)}
                 </p>
 
                 <div className="mb-6">

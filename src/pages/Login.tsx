@@ -20,7 +20,11 @@ export default function Login() {
       await signInWithPopup(auth, provider);
       navigate('/');
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') return;
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      if (err.code === 'auth/popup-blocked') {
+        setError('تم حظر النافذة المنبثقة من قبل المتصفح. يرجى السماح بالنوافذ المنبثقة في إعدادات متصفحك وإعادة المحاولة.');
+        return;
+      }
       console.error(err);
       setError('فشل تسجيل الدخول عبر Google');
     } finally {

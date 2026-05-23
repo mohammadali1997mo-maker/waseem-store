@@ -12,7 +12,7 @@ export default function Payment() {
   const [searchParams] = useSearchParams();
   const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'qr'>('stripe');
+  const paymentMethod = 'qr';
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
   const [note, setNote] = useState("");
 
@@ -35,12 +35,6 @@ export default function Payment() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Check for Stripe redirect success
-    const success = searchParams.get("success");
-    if (success === "true") {
-      handleFinalizePayment();
-    }
-
     const unsub = auth.onAuthStateChanged((user) => {
       if (user) {
         setCurrentUser({
@@ -97,6 +91,10 @@ export default function Payment() {
       }
 
       setIsPaid(true);
+      // Immediately open WhatsApp to send the invoice
+      setTimeout(() => {
+        openWhatsApp();
+      }, 100);
     } catch (err) {
       console.error(err);
       alert("فشل في حفظ الفاتورة، يرجى التواصل مع الدعم");
@@ -105,56 +103,11 @@ export default function Payment() {
     }
   };
 
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    if (paymentMethod === 'stripe') {
-      try {
-        const response = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            service,
-            amount: parseFloat(amount),
-            orderId,
-            email: currentUser?.email
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Server error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url; // Redirect to Stripe Checkout
-        } else {
-          throw new Error(data.error || "Failed to create checkout session");
-        }
-      } catch (err: any) {
-        console.error(err);
-        if (err.message === "Failed to fetch") {
-          alert("فشل الاتصال بمزود الدفع (الخادم غير مستجيب)");
-        } else {
-          alert(err.message || "حدث خطأ في الاتصال ببوابة الدفع");
-        }
-        setLoading(false);
-      }
-    } else {
-      // For QR, just simulate after delay
-      setTimeout(() => {
-        handleFinalizePayment();
-      }, 2000);
-    }
-  };
-
   const openWhatsApp = () => {
-    const methodText = paymentMethod === 'stripe' ? 'بطاقة ائتمان (Stripe)' : 'تحويل عبر QR Code';
+    const methodText = 'شام كاش - Sham Cash';
     const noteText = note ? `%0Aملاحظات: ${note}` : '';
-    const message = `تم طلب شحن جديد في وسيم ستور%0A%0Aرقم الفاتورة: ${orderId}%0Aطريقة الدفع: ${methodText}%0Aالخدمة: ${service}%0Aالكمية: ${qty}%0Aالمبلغ: ${amount}$%0Aرقم المنتج: ${pid}%0Aالعميل: ${currentUser?.name}${noteText}%0Aالتاريخ: ${date}`;
-    window.open(`https://wa.me/9631423016?text=${encodeURIComponent(message)}`, "_blank");
+    const message = `تم طلب شحن جديد في وسيم ستور%0A%0Aرقم الفاتورة: ${orderId}%0Aطريقة الدفع: ${methodText}%0Aالخدمة: ${service}%0Aالكمية: ${qty}%0Aالمبلغ: ${amount}$%0Aرقم المنتج: ${pid}%0Aالعميل: ${currentUser?.name || "زائر"}${noteText}%0Aالتاريخ: ${date}`;
+    window.open(`https://wa.me/963995167997?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   return (
@@ -191,137 +144,118 @@ export default function Payment() {
             animate={{ x: 0, opacity: 1 }}
             className="checkout-card card-glass rounded-3xl p-8"
           >
-            <div className="flex gap-4 mb-8">
-              <button 
-                onClick={() => setPaymentMethod('stripe')}
-                className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border transition-all ${
-                  paymentMethod === 'stripe' ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <CreditCard size={20} />
-                <span className="font-bold">البطاقة (Stripe)</span>
-              </button>
-              <button 
-                onClick={() => setPaymentMethod('qr')}
-                className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border transition-all ${
-                  paymentMethod === 'qr' ? 'bg-purple-500 border-purple-400 text-white shadow-lg shadow-purple-500/20' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <QrCode size={20} />
-                <span className="font-bold">شام كاش (Sham Cash)</span>
-              </button>
+            <div className="text-center mb-6 bg-purple-500/10 border border-purple-500/20 rounded-2xl py-4 flex items-center justify-center gap-3">
+              <QrCode className="text-purple-400 animate-pulse" size={24} />
+              <span className="text-white font-black text-lg">تحويل عبر شام كاش (Sham Cash)</span>
             </div>
 
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-3 mb-8">
-              <div className="flex justify-between">
-                <span className="text-white/60">الخدمة:</span>
-                <span className="text-white font-bold">{service}</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-white/60">المبلغ الإجمالي:</span>
-                <div className="text-right">
-                  {currency === 'SYP' ? (
-                    <>
-                      <span className="text-green-400 font-bold block text-xl">{formatPrice(amount, 'SYP')}</span>
-                      <span className="text-white/40 text-sm block">({formatPrice(amount, 'USD')})</span>
-                    </>
-                  ) : (
-                    <span className="text-green-400 font-bold text-xl">{formatPrice(amount, 'USD')}</span>
-                  )}
+            {isPaid ? (
+              <div className="text-center space-y-6 py-10">
+                <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/20 animate-bounce">
+                  <ShieldCheck size={48} />
                 </div>
-              </div>
-              <div className="flex justify-between text-sm border-t border-white/10 pt-3 opacity-60">
-                <span>رقم المنتج: {pid}</span>
-              </div>
-            </div>
-
-            {/* Custom Note Input */}
-            {!isPaid && (
-              <div className="mb-8">
-                <label className="block text-white/60 text-sm mb-2 mr-1">ملاحظات إضافية (اختياري)</label>
-                <textarea 
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="أدخل أي ملاحظات أو تعليمات خاصة بطلبك هنا..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm outline-none focus:border-purple-500 transition-all resize-none h-24"
-                />
-              </div>
-            )}
-
-            {paymentMethod === 'stripe' ? (
-              <div className="space-y-6">
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 text-right">
-                  <p className="text-blue-300 font-bold mb-2 flex items-center gap-2 justify-end">
-                    <ShieldCheck size={18} />
-                    دفع آمن عبر Stripe
-                  </p>
-                  <p className="text-white/70 text-sm">سيتم توجيهك إلى صفحة Stripe المشفرة لإتمام عملية الدفع بأمان تام. نحن لا نقوم بتخزين بيانات بطاقتك.</p>
+                <h3 className="text-2xl font-black text-white">تم إرسال طلبك بنجاح!</h3>
+                <p className="text-white/70 max-w-sm mx-auto leading-relaxed text-right md:text-center">
+                  تتبقى خطوة أخيرة لتأكيد عملية الشحن. الرجاء إرسال لقطة شاشة لعملية التحويل وتفاصيل الفاتورة عبر واتساب إلى الرقم السوري التالي لتفعيل الطلب فوراً:
+                </p>
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-4 inline-block font-mono text-xl font-bold text-purple-400 select-all">
+                  +963 995 167 997
                 </div>
-                
                 <button 
-                  onClick={handlePayment}
-                  disabled={loading || isPaid}
-                  className={`w-full py-5 rounded-2xl font-bold text-lg transition-all shadow-xl flex items-center justify-center gap-3 ${
-                    isPaid ? 'bg-green-500 cursor-default' : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] shadow-blue-500/25'
-                  }`}
+                  onClick={openWhatsApp}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-5 rounded-2xl font-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-green-600/25 text-lg active:scale-95"
                 >
-                  {loading ? 'جاري التحويل...' : isPaid ? (
-                    <>
-                      <ShieldCheck />
-                      تم الدفع بنجاح
-                    </>
-                  ) : 'الانتقال للدفع الآمن الآن'}
+                  <MessageCircle size={22} />
+                  أرسل الفاتورة عبر واتساب
                 </button>
               </div>
             ) : (
-              <div className="text-center space-y-6">
-                <div className="bg-white rounded-[2.5rem] p-10 mx-auto w-fit shadow-[0_0_60px_rgba(147,51,234,0.5)] border-4 border-purple-500/50">
-                  <img 
-                    src="/input_file_0.png" 
-                    alt="Sham Cash QR Code" 
-                    className="w-80 h-auto mx-auto rounded-2xl shadow-xl transition-transform hover:scale-105 duration-300"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      // Fallback in case path differs
-                      const target = e.target as HTMLImageElement;
-                      if (!target.src.includes('input_file_1')) {
-                        target.src = '/input_file_1.png';
-                      }
-                    }}
-                  />
-                  <div className="mt-8 space-y-2">
-                    <div className="bg-purple-600 text-white px-6 py-2 rounded-full font-black text-xl mb-2 inline-block">
+              <div className="space-y-6 flex flex-col items-center w-full">
+                {/* 1. Sham Cash QR Box first */}
+                <div className="bg-white rounded-[2.5rem] p-7 md:p-8 w-full max-w-[340px] shadow-[0_0_60px_rgba(147,51,234,0.35)] border-4 border-purple-500/50 flex flex-col items-center justify-center text-center">
+                  
+                  {/* Badge & Name Centered Right Above the QR Code */}
+                  <div className="mb-6 space-y-2.5 flex flex-col items-center justify-center w-full">
+                    <div className="bg-purple-600 text-white px-5 py-1.5 rounded-full font-black text-xs md:text-sm tracking-wide inline-block shadow-md">
                       شام كاش - Sham Cash
                     </div>
-                    <p className="text-gray-900 font-bold text-lg">محمد وسيم عبد المجيد الشيخ علي</p>
-                    <p className="text-gray-500 text-xs font-mono select-all">df1058dd6cc77204274b8ce31c7abf9f</p>
+                    <p className="text-gray-950 font-black text-base md:text-md tracking-tight leading-snug">
+                      محمد وسيم عبد المجيد الشيخ علي
+                    </p>
+                    <p className="text-gray-500 text-[10px] font-mono select-all bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl break-all">
+                      df1058dd6cc77204274b8ce31c7abf9f
+                    </p>
+                  </div>
+
+                  {/* QR Image Container (Padded & Safely Sized for Easy Scanning) */}
+                  <div className="bg-slate-50 p-4 rounded-[2rem] border border-purple-100 flex items-center justify-center w-[190px] h-[190px] shadow-inner">
+                    <img 
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=df1058dd6cc77204274b8ce31c7abf9f&margin=8&color=4c1d95" 
+                      alt="Sham Cash QR Code" 
+                      className="w-[160px] h-[160px] object-contain rounded-2xl transition-transform hover:scale-105 duration-300"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-500/30 rounded-3xl p-6 text-white/95 text-sm md:text-base leading-relaxed text-right">
-                  <p className="font-bold text-purple-300 text-lg mb-3 flex items-center gap-2 justify-end">
+
+                {/* 2. Service details next */}
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-3 w-full">
+                  <div className="flex justify-between">
+                    <span className="text-white/60">الخدمة:</span>
+                    <span className="text-white font-bold">{service}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-white/60">المبلغ الإجمالي:</span>
+                    <div className="text-right">
+                      {currency === 'SYP' ? (
+                        <>
+                          <span className="text-green-400 font-bold block text-xl">{formatPrice(amount, 'SYP')}</span>
+                          <span className="text-white/40 text-sm block">({formatPrice(amount, 'USD')})</span>
+                        </>
+                      ) : (
+                        <span className="text-green-400 font-bold text-xl">{formatPrice(amount, 'USD')}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm border-t border-white/10 pt-3 opacity-60">
+                    <span>رقم المنتج: {pid}</span>
+                  </div>
+                </div>
+
+                {/* 3. Custom Note Input */}
+                <div className="mb-4 w-full">
+                  <label className="block text-white/60 text-sm mb-2 mr-1">ملاحظات إضافية (اختياري)</label>
+                  <textarea 
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="أدخل أي ملاحظات أو تعليمات خاصة بطلبك هنا..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm outline-none focus:border-purple-500 transition-all resize-none h-24"
+                  />
+                </div>
+
+                {/* 4. Steps & Guide */}
+                <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-500/30 rounded-3xl p-6 text-white/95 text-sm md:text-base leading-relaxed text-right w-full">
+                  <p className="font-bold text-purple-300 text-base mb-3 flex items-center gap-2 justify-end">
                     <QrCode size={20} />
                     خطوات الدفع عبر شام كاش
                   </p>
-                  <ul className="space-y-2 opacity-90">
+                  <ul className="space-y-3 opacity-90 text-sm font-sans">
                     <li>1. افتح تطبيق <span className="text-purple-300 font-bold">شام كاش</span> على هاتفك.</li>
                     <li>2. اختر خيار "مسح الرمز" ووجه الكاميرا نحو الكود أعلاه.</li>
-                    <li>3. أدخل المبلغ المطلوب: <span className="text-green-400 font-black text-xl">{formatPrice(amount, 'SYP')}</span>.</li>
-                    <li>4. بعد تأكيد التحويل، اضغط على الزر أدناه لإرسال طلبك للمراجعة.</li>
+                    <li>3. أدخل المبلغ المطلوب بالليرة السورية: <span className="text-green-400 font-black text-xl">{formatPrice(amount, 'SYP')}</span>.</li>
+                    <li>4. بعد إتمام التحويل، اضغط على الزر أدناه لتسجيل طلبك وفتح واتساب تلقائياً لإرسال الفاتورة وتأكيد الشحن فوراً.</li>
                   </ul>
                 </div>
+
+                {/* 5. Submit Action Button */}
                 <button 
                   onClick={handleFinalizePayment}
                   disabled={loading || isPaid}
-                  className={`w-full py-5 rounded-2xl font-bold text-xl transition-all shadow-xl flex items-center justify-center gap-3 ${
+                  className={`w-full py-5 rounded-2xl font-black text-xl transition-all shadow-xl flex items-center justify-center gap-3 ${
                     isPaid ? 'bg-green-500 cursor-default shadow-green-500/20' : 'bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 transform hover:scale-[1.02] shadow-purple-600/30'
                   }`}
                 >
-                  {loading ? 'جاري المعالجة...' : isPaid ? (
-                    <>
-                      <ShieldCheck />
-                      تم إرسال الطلب بنجاح
-                    </>
-                  ) : 'أكملت التحويل، أرسل الطلب الآن'}
+                  {loading ? 'جاري المعالجة...' : 'تأكيد الدفع وإرسال الفاتورة عبر واتساب'}
                 </button>
               </div>
             )}
@@ -412,13 +346,10 @@ export default function Payment() {
                   <div className="flex items-start gap-4 mb-4">
                     <div className="bg-white p-3 rounded-2xl shadow-xl shadow-purple-500/20">
                       <img 
-                        src="/input_file_0.png" 
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=df1058dd6cc77204274b8ce31c7abf9f&margin=4&color=4c1d95" 
                         alt="QR" 
-                        className="w-20 h-20"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          if (!target.src.includes('input_file_1')) target.src = '/input_file_1.png';
-                        }}
+                        className="w-20 h-20 object-contain rounded-lg"
+                        referrerPolicy="no-referrer"
                       />
                     </div>
                     <div className="flex-1">
@@ -444,14 +375,14 @@ export default function Payment() {
                   <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 text-center">
                     <ShieldCheck className="text-green-400 mx-auto mb-3" size={40} />
                     <h3 className="text-lg font-bold text-white mb-1">تم التحقق من الدفع</h3>
-                    <p className="text-white/50 text-xs">جاري إرسال الطلب لفريق التنفيذ</p>
+                    <p className="text-white/50 text-xs">جاري جاهزية إرسال الفاتورة لتأكيد طلبك</p>
                   </div>
                   <button 
                     onClick={openWhatsApp}
                     className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-600/20 active:scale-95"
                   >
                     <MessageCircle size={20} />
-                    متابعة الطلب عبر واتساب
+                    أرسل الفاتورة عبر واتساب (+963 995 167 997)
                   </button>
                 </motion.div>
               )}

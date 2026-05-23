@@ -19,11 +19,15 @@ export async function logUser(user: any) {
       return 'WSIM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     };
 
+    const providerId = user.providerData?.[0]?.providerId || '';
+    const method = providerId === 'google.com' ? 'Google' : 'البريد الإلكتروني';
+
     const userData = {
       uid: user.uid,
       email: user.email,
       name: user.displayName || user.email?.split('@')[0] || 'مستخدم',
       lastActive: new Date().toISOString(),
+      method: method,
     };
 
     if (!userSnap.exists()) {

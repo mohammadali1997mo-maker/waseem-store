@@ -4,8 +4,11 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
+import { db } from "../lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 const packages = [
+  { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '60 شدة', price: 0.99, service: 'PUBG 60 شدة' },
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '325 شدات', price: 4.44, service: 'PUBG 325 شدات' },
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '660 شدات', price: 8.50, service: 'PUBG 660 شدات' },
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '1800 شدات', price: 21.00, service: 'PUBG 1800 شدات' },
@@ -20,16 +23,35 @@ export default function Games() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
-  const [quantities, setQuantities] = useState<Record<number, number>>(
-    packages.reduce((acc, _, idx) => ({ ...acc, [idx]: 1 }), {})
-  );
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    // Set initial quantities
+    setQuantities(packages.reduce((acc, _, idx) => ({ ...acc, [idx]: 1 }), {}));
+
     trackSectionVisit("شحن شدات الألعاب (Games)");
     const handleCurrencyChange = () => setCurrency(getCurrency());
     window.addEventListener('currencyChange', handleCurrencyChange);
-    return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+
+    // Watch for custom prices
+    const unsubPrices = onSnapshot(collection(db, 'prices'), (snapshot) => {
+      const pm: Record<string, number> = {};
+      snapshot.docs.forEach(doc => {
+        pm[doc.id] = doc.data().price;
+      });
+      setCustomPrices(pm);
+    });
+
+    return () => {
+      window.removeEventListener('currencyChange', handleCurrencyChange);
+      unsubPrices();
+    };
   }, []);
+
+  const getPkgPrice = (pkg: any) => {
+    return customPrices[pkg.service] !== undefined ? customPrices[pkg.service] : pkg.price;
+  };
 
   const toggleCurrency = () => {
     const newCurrency = currency === 'USD' ? 'SYP' : 'USD';
@@ -48,7 +70,8 @@ export default function Games() {
 
   const handleBuyClick = (pkg: any, index: number) => {
     const qty = quantities[index] || 1;
-    const finalPrice = (pkg.price * qty).toFixed(2);
+    const activePrice = getPkgPrice(pkg);
+    const finalPrice = (activePrice * qty).toFixed(2);
     setSelectedPackage({ ...pkg, qty, finalPrice });
     setIsModalOpen(true);
   };
@@ -87,7 +110,7 @@ export default function Games() {
             placeholder="ابحث عن اللعبة أو الباقة..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-full bg-white/10 border border-white/20 text-white px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full rounded-full bg-white/10 border border-white/25 text-white px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/60" />
         </div>
@@ -98,7 +121,8 @@ export default function Games() {
           {filteredPackages.map((pkg, idx) => {
             const originalIndex = packages.indexOf(pkg);
             const qty = quantities[originalIndex] || 1;
-            const totalPrice = (pkg.price * qty).toFixed(2);
+            const activePrice = getPkgPrice(pkg);
+            const totalPrice = (activePrice * qty).toFixed(2);
 
             return (
               <motion.div
@@ -112,7 +136,7 @@ export default function Games() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-1">{pkg.name}</h3>
                 <p className="text-white/60 text-sm mb-4">{pkg.package}</p>
-                <p className="text-2xl font-black text-white mb-6">{formatPrice(pkg.price, currency)}</p>
+                <p className="text-2xl font-black text-white mb-6">{formatPrice(activePrice, currency)}</p>
 
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <span className="text-white/70 text-sm">الكمية:</span>

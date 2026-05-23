@@ -47,6 +47,142 @@ const EXPORT_COLUMNS = [
   { id: 'referralCode', label: 'كود الترويج' },
 ];
 
+const ALL_PRODUCTS = [
+  // Games
+  { key: 'PUBG 60 شدة', name: 'ببجي - 60 شدة', category: 'games', defaultPrice: 0.99 },
+  { key: 'PUBG 325 شدات', name: 'ببجي - 325 شدات', category: 'games', defaultPrice: 4.44 },
+  { key: 'PUBG 660 شدات', name: 'ببجي - 660 شدات', category: 'games', defaultPrice: 8.50 },
+  { key: 'PUBG 1800 شدات', name: 'ببجي - 1800 شدات', category: 'games', defaultPrice: 21.00 },
+  { key: 'Jawaker 10000 توكنز', name: 'جواكر - 10000 توكنز', category: 'games', defaultPrice: 1.20 },
+  { key: 'FREE FIRE 100 جوهرة', name: 'فري فاير - 100 جوهرة', category: 'games', defaultPrice: 0.93 },
+  { key: 'COD 880 CP', name: 'كول أوف ديوتي - 880 CP', category: 'games', defaultPrice: 12.99 },
+
+  // Social Media
+  { key: 'متابعين تيك توك', name: 'متابعين تيك توك', category: 'social', defaultPrice: 5.0 },
+  { key: 'لايكات تيك توك', name: 'لايكات تيك توك', category: 'social', defaultPrice: 3.0 },
+  { key: 'مشاهدات تيك توك', name: 'مشاهدات تيك توك', category: 'social', defaultPrice: 2.0 },
+  { key: 'متابعين إنستغرام', name: 'متابعين إنستغرام', category: 'social', defaultPrice: 6.0 },
+  { key: 'لايكات إنستغرام', name: 'لايكات إنستغرام', category: 'social', defaultPrice: 4.0 },
+  { key: 'أعضاء القنوات', name: 'أعضاء القنوات (تلجرام)', category: 'social', defaultPrice: 4.0 },
+  { key: 'مشاهدات الرسائل', name: 'مشاهدات الرسائل (تلجرام)', category: 'social', defaultPrice: 1.0 },
+
+  // Chat Apps
+  { key: 'سول شيل', name: 'سول شيل', category: 'chat', defaultPrice: 1.77 },
+  { key: 'مجلس', name: 'مجلس', category: 'chat', defaultPrice: 1.07 },
+  { key: 'ياهلان', name: 'ياهلان', category: 'chat', defaultPrice: 1.78 },
+  { key: 'سول ستار', name: 'سول ستار', category: 'chat', defaultPrice: 1.1 },
+  { key: 'بارتي ستار', name: 'بارتي ستار', category: 'chat', defaultPrice: 1.07 },
+  { key: 'بيغو لايف', name: 'بيغو لايف', category: 'chat', defaultPrice: 0.89 },
+  { key: 'حكي تشان', name: 'حكي تشان', category: 'chat', defaultPrice: 0.76 },
+  { key: 'زينا لايف', name: 'زينا لايف', category: 'chat', defaultPrice: 1.09 },
+  { key: 'هابي تشات', name: 'هابي تشات', category: 'chat', defaultPrice: 1.07 },
+  { key: 'ايومي تشات', name: 'ايومي تشات', category: 'chat', defaultPrice: 0.95 },
+  { key: 'هيا تشات', name: 'هيا تشات', category: 'chat', defaultPrice: 1.08 },
+  { key: 'أب فن', name: 'أب فن', category: 'chat', defaultPrice: 1.24 },
+  { key: 'مولي ستار', name: 'مولي ستار', category: 'chat', defaultPrice: 1.15 },
+  { key: 'تادا شات', name: 'تادا شات', category: 'chat', defaultPrice: 1.24 },
+  { key: 'نبض شات', name: 'نبض شات', category: 'chat', defaultPrice: 0.075 },
+  { key: 'ديمو شات', name: 'ديمو شات', category: 'chat', defaultPrice: 0.95 },
+  { key: 'اب لايف', name: 'اب لايف', category: 'chat', defaultPrice: 1.65 },
+  { key: 'بيلا شات', name: 'بيلا شات', category: 'chat', defaultPrice: 0.87 },
+  { key: 'تاكا شات', name: 'تاكا شات', category: 'chat', defaultPrice: 1.03 },
+  { key: 'لامي شات', name: 'لامي شات', category: 'chat', defaultPrice: 0.77 },
+  { key: 'هوا شات', name: 'هوا شات', category: 'chat', defaultPrice: 1.188 },
+  { key: 'سكاي شات', name: 'سكاي شات', category: 'chat', defaultPrice: 1.15 },
+  { key: 'هابي شات', name: 'هابي شات', category: 'chat', defaultPrice: 1.05 },
+  { key: 'Bobo chat', name: 'Bobo chat', category: 'chat', defaultPrice: 1.05 },
+  { key: 'توب توب', name: 'توب توب', category: 'chat', defaultPrice: 1.1 },
+  { key: 'دريم شات', name: 'دريم شات', category: 'chat', defaultPrice: 0.1 },
+  { key: 'الو شات', name: 'الو شات', category: 'chat', defaultPrice: 0.1 },
+  { key: 'وياك شات', name: 'وياك شات', category: 'chat', defaultPrice: 1.12 },
+  { key: 'بيب لايف', name: 'بيب لايف', category: 'chat', defaultPrice: 1.1 },
+  { key: 'غولد شات', name: 'غولد شات', category: 'chat', defaultPrice: 0.70 },
+  { key: 'مانغو لايف', name: 'مانغو لايف', category: 'chat', defaultPrice: 1.22 },
+  { key: 'مان شات', name: 'مان شات', category: 'chat', defaultPrice: 1.4 },
+  { key: 'ستار ميكر', name: 'ستار ميكر', category: 'chat', defaultPrice: 2.12 },
+  { key: 'واهو شات', name: 'واهو شات', category: 'chat', defaultPrice: 1.1 },
+  { key: 'فور فان شات', name: 'فور فان شات', category: 'chat', defaultPrice: 1.25 },
+  { key: 'لايكي لايف', name: 'لايكي لايف', category: 'chat', defaultPrice: 0.99 },
+  { key: 'هيو شات', name: 'هيو شات', category: 'chat', defaultPrice: 1.3 },
+  { key: 'كوكو شات', name: 'كوكو شات', category: 'chat', defaultPrice: 0.9 },
+  { key: 'تامي', name: 'تامي', category: 'chat', defaultPrice: 0.810 },
+  { key: 'يوهو شات', name: 'يوهو شات', category: 'chat', defaultPrice: 1.090 },
+  { key: 'لاما شات', name: 'لاما شات', category: 'chat', defaultPrice: 1.040 },
+  { key: 'ميكو شات', name: 'ميكو شات', category: 'chat', defaultPrice: 1.085 },
+  { key: 'ازال لايف', name: 'ازال لايف', category: 'chat', defaultPrice: 0.85 },
+  { key: 'هوني جار', name: 'هوني جار', category: 'chat', defaultPrice: 1.56 },
+  { key: 'اهلان شات', name: 'اهلان شات', category: 'chat', defaultPrice: 0.83 },
+  { key: 'ويغو بارتي', name: 'ويغو بارتي', category: 'chat', defaultPrice: 0.84 },
+  { key: 'يويو شات', name: 'يويو شات', category: 'chat', defaultPrice: 0.76 },
+  { key: 'بوبو لايف', name: 'بوبو لايف', category: 'chat', defaultPrice: 1.58 },
+  { key: 'سلام شات', name: 'سلام شات', category: 'chat', defaultPrice: 1.008 },
+  { key: 'تالك تالك', name: 'تالك تالك', category: 'chat', defaultPrice: 1.28 },
+  { key: 'بينمو شات', name: 'بينمو شات', category: 'chat', defaultPrice: 0.86 },
+  { key: 'ميغو شات', name: 'ميغو شات', category: 'chat', defaultPrice: 1.11 },
+  { key: 'ليغو لايف', name: 'ليغو لايف', category: 'chat', defaultPrice: 1.193 },
+  { key: 'ليلا تشات', name: 'ليلا تشات', category: 'chat', defaultPrice: 0.225 },
+  { key: 'يوي تشات', name: 'يوي تشات', category: 'chat', defaultPrice: 0.966 },
+  { key: 'سويو', name: 'سويو', category: 'chat', defaultPrice: 0.815 },
+  { key: 'سول شات', name: 'سول شات', category: 'chat', defaultPrice: 0.930 },
+  { key: 'فانسي لايف', name: 'فانسي لايف', category: 'chat', defaultPrice: 0.61 },
+  { key: 'لايت شات', name: 'لايت شات', category: 'chat', defaultPrice: 1.05 },
+  { key: 'اولاميت شات', name: 'اولاميت شات', category: 'chat', defaultPrice: 1.162 },
+  { key: 'سوغو', name: 'سوغو', category: 'chat', defaultPrice: 1.063 },
+  { key: 'سوبر لايف', name: 'سوبر لايف', category: 'chat', defaultPrice: 0.999 },
+  { key: 'هامي بارتي', name: 'هامي بارتي', category: 'chat', defaultPrice: 0.999 },
+  { key: 'اوبا لايف', name: 'اوبا لايف', category: 'chat', defaultPrice: 1.05 },
+  { key: 'ليام شات', name: 'ليام شات', category: 'chat', defaultPrice: 1.099 },
+  { key: 'يامي ستار', name: 'يامي ستار', category: 'chat', defaultPrice: 1.183 },
+  { key: 'هاي بلاي', name: 'هاي بلاي', category: 'chat', defaultPrice: 0.910 },
+  { key: 'وصلة تشات', name: 'وصلة تشات', category: 'chat', defaultPrice: 0.350 },
+  { key: 'ليونز تشات', name: 'ليونز تشات', category: 'chat', defaultPrice: 0.15 },
+  { key: 'هلا مي', name: 'هلا مي', category: 'chat', defaultPrice: 1.277 },
+  { key: 'جانكو', name: 'جانكو', category: 'chat', defaultPrice: 1.005 },
+  { key: 'مرحبا شات', name: 'مرحبا شات', category: 'chat', defaultPrice: 1.053 },
+  { key: 'جيمي لايف', name: 'جيمي لايف', category: 'chat', defaultPrice: 0.132 },
+  { key: 'عمار شات', name: 'عمار شات', category: 'chat', defaultPrice: 1.23 },
+  { key: 'يوبي لايف', name: 'يوبي لايف', category: 'chat', defaultPrice: 0.556 },
+  { key: 'آمو شات', name: 'آمو شات', category: 'chat', defaultPrice: 0.071 },
+  { key: 'شاميت تشات', name: 'شاميت تشات', category: 'chat', defaultPrice: 2.572 },
+  { key: 'هيغو لايف', name: 'هيغو لايف', category: 'chat', defaultPrice: 0.122 },
+  { key: 'ايمو شات', name: 'ايمو شات', category: 'chat', defaultPrice: 0.571 },
+  { key: 'هاي بارتي', name: 'هاي بارتي', category: 'chat', defaultPrice: 1.105 },
+  { key: 'كواي', name: 'كواي', category: 'chat', defaultPrice: 2.088 },
+  { key: 'بارتي هيرو', name: 'بارتي هيرو', category: 'chat', defaultPrice: 0.995 },
+  { key: 'هووبي', name: 'هووبي', category: 'chat', defaultPrice: 0.994 },
+  { key: 'آشا لايف', name: 'آشا لايف', category: 'chat', defaultPrice: 1.248 },
+  { key: 'سوماتش', name: 'سوماتش', category: 'chat', defaultPrice: 1.278 },
+  { key: 'اوهلا', name: 'اوهلا', category: 'chat', defaultPrice: 1.099 },
+  { key: 'صدفة', name: 'صدفة', category: 'chat', defaultPrice: 1.03 },
+  { key: 'كارني', name: 'كارني', category: 'chat', defaultPrice: 1.187 },
+  { key: 'ديتو', name: 'ديتو', category: 'chat', defaultPrice: 1.981 },
+  { key: 'سما شات', name: 'سما شات', category: 'chat', defaultPrice: 1.030 },
+  { key: 'غوغو شات', name: 'غوغو شات', category: 'chat', defaultPrice: 0.389 },
+  { key: 'فالا', name: 'فالا', category: 'chat', defaultPrice: 0.361 },
+  { key: 'جالا ستار', name: 'جالا ستار', category: 'chat', defaultPrice: 0.830 },
+  { key: 'سعادة شات', name: 'سعادة شات', category: 'chat', defaultPrice: 1.065 },
+  { key: 'فوفو شات', name: 'فوفو شات', category: 'chat', defaultPrice: 0.879 },
+  { key: 'ياهلا شات', name: 'ياهلا شات', category: 'chat', defaultPrice: 2.31 },
+  { key: 'هيا شات', name: 'هيا شات', category: 'chat', defaultPrice: 7.92 },
+  { key: 'سهرة', name: 'سهرة', category: 'chat', defaultPrice: 1.005 },
+  { key: 'بوتا لايف', name: 'بوتا لايف', category: 'chat', defaultPrice: 1.292 },
+  { key: 'زار شات', name: 'زار شات', category: 'chat', defaultPrice: 1.010 },
+  { key: 'اور تالك', name: 'اور تالك', category: 'chat', defaultPrice: 0.86 },
+  { key: 'لادو', name: 'لادو', category: 'chat', defaultPrice: 0.922 },
+  { key: 'هوبي ستار', name: 'هوبي ستار', category: 'chat', defaultPrice: 0.80 },
+  { key: 'كاراك', name: 'كاراك', category: 'chat', defaultPrice: 0.782 },
+  { key: 'روح شات', name: 'روح شات', category: 'chat', defaultPrice: 0.2 },
+  { key: 'يوكي', name: 'يوكي', category: 'chat', defaultPrice: 1.235 },
+  { key: 'سايا', name: 'سايا', category: 'chat', defaultPrice: 0.885 },
+  { key: 'وي شيل', name: 'وي شيل', category: 'chat', defaultPrice: 0.991 },
+  { key: 'فيلا شات', name: 'فيلا شات', category: 'chat', defaultPrice: 1.100 },
+  { key: 'يومي', name: 'يومي', category: 'chat', defaultPrice: 0.981 },
+  { key: 'ديكا', name: 'ديكا', category: 'chat', defaultPrice: 1.43 },
+  { key: 'واوو', name: 'واوو', category: 'chat', defaultPrice: 1.03 },
+  { key: 'شباب شات', name: 'شباب شات', category: 'chat', defaultPrice: 0.907 },
+  { key: 'ويل شيل', name: 'ويل شيل', category: 'chat', defaultPrice: 1.005 },
+];
+
 export default function AdminDashboard() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -65,6 +201,13 @@ export default function AdminDashboard() {
   const [exportDateStart, setExportDateStart] = useState('');
   const [exportDateEnd, setExportDateEnd] = useState('');
   const [selectedColIds, setSelectedColIds] = useState<string[]>(EXPORT_COLUMNS.map(c => c.id));
+
+  // Dynamic price list states
+  const [pricesSnapshot, setPricesSnapshot] = useState<Record<string, number>>({});
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState<string>('');
+  const [priceSearch, setPriceSearch] = useState<string>('');
+  const [priceFilter, setPriceFilter] = useState<string>('all');
 
   const navigate = useNavigate();
 
@@ -139,17 +282,61 @@ export default function AdminDashboard() {
       setAdmins(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
 
+    const unsubPrices = onSnapshot(collection(db, 'prices'), (snapshot) => {
+      const pm: Record<string, number> = {};
+      snapshot.docs.forEach(doc => {
+        pm[doc.id] = doc.data().price;
+      });
+      setPricesSnapshot(pm);
+    });
+
     return () => {
       unsubInvoices();
       unsubUsers();
       unsubStats();
       unsubAdmins();
+      unsubPrices();
     };
   }, [isAdmin]);
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/');
+  };
+
+  const handleSavePrice = async (key: string, newPrice: number) => {
+    try {
+      if (role !== 'owner' && role !== 'manager') {
+        alert("لا تملك صلاحيات لتعديل الأسعار");
+        return;
+      }
+      if (isNaN(newPrice) || newPrice <= 0) {
+        alert("يرجى إدخال سعر صحيح أكبر من الصفر");
+        return;
+      }
+      await setDoc(doc(db, 'prices', key), {
+        price: Number(newPrice),
+        updatedAt: new Date().toISOString()
+      });
+      setEditingKey(null);
+    } catch (err) {
+      console.error(err);
+      alert("فشل تحديث السعر");
+    }
+  };
+
+  const handleResetPrice = async (key: string) => {
+    try {
+      if (role !== 'owner' && role !== 'manager') {
+        alert("لا تملك صلاحيات لتعديل الأسعار");
+        return;
+      }
+      await deleteDoc(doc(db, 'prices', key));
+      setEditingKey(null);
+    } catch (err) {
+      console.error(err);
+      alert("فشل إعادة تعيين السعر للمصنع");
+    }
   };
 
   const exportToExcel = () => {
@@ -200,7 +387,14 @@ export default function AdminDashboard() {
         setAccessToken(credential.accessToken);
         return credential.accessToken;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return null;
+      }
+      if (err?.code === 'auth/popup-blocked') {
+        alert("تم حظر النافذة المنبثقة من قبل المتصفح. يرجى تفعيل أو السماح بالنوافذ المنبثقة في متصفحك لإتمام تسجيل الدخول والمزامنة.");
+        return null;
+      }
       console.error("Auth Error", err);
       alert("يجب تسجيل الدخول بـ Google للمزامنة مع جداول البيانات");
     }
@@ -481,6 +675,134 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
+        {/* Price Management Panel */}
+        <section className="card-glass p-6 rounded-3xl border-purple-500/10 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-4">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <TrendingUp size={22} className="text-purple-400" />
+                إدارة أسعار المنتجات والخدمات
+              </h2>
+              <p className="text-white/40 text-[11px] md:text-xs mt-1">تعديل أسعار المنتجات والخدمات وسيتم تحديثها تلقائياً لدى المشترين في المتجر</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              <input
+                type="text"
+                placeholder="ابحث عن منتج..."
+                value={priceSearch}
+                onChange={(e) => setPriceSearch(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-purple-500 w-full md:w-48 text-right"
+              />
+              <select
+                value={priceFilter}
+                onChange={(e) => setPriceFilter(e.target.value)}
+                className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500 w-full md:w-auto text-right"
+              >
+                <option value="all">جميع الفئات</option>
+                <option value="games">🎮 شحن ألعاب</option>
+                <option value="social">📣 سوشيال ميديا</option>
+                <option value="chat">💬 تطبيقات الدردشة</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
+            {(() => {
+              const items = ALL_PRODUCTS.filter(prod => {
+                const matchesSearch = prod.name.toLowerCase().includes(priceSearch.toLowerCase()) || prod.key.toLowerCase().includes(priceSearch.toLowerCase());
+                const matchesCat = priceFilter === 'all' || prod.category === priceFilter;
+                return matchesSearch && matchesCat;
+              });
+
+              if (items.length === 0) {
+                return <div className="col-span-full py-8 text-center text-white/30">لا توجد منتجات مطابقة للبحث</div>;
+              }
+
+              return items.map((prod) => {
+                const hasCustom = pricesSnapshot[prod.key] !== undefined;
+                const currentPrice = hasCustom ? pricesSnapshot[prod.key] : prod.defaultPrice;
+                const isEditing = editingKey === prod.key;
+
+                return (
+                  <div key={prod.key} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-purple-500/20 transition-all">
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <div className="text-right">
+                        <h4 className="font-bold text-sm leading-tight">{prod.name}</h4>
+                        <span className="text-[9px] text-white/30 mt-1 block">
+                          {prod.category === 'games' ? '🎮 شحن ألعاب' : prod.category === 'social' ? '📣 سوشيال ميديا' : '💬 تطبيقات دردشة'}
+                        </span>
+                      </div>
+                      <div className="text-left font-mono text-sm leading-tight flex flex-col items-end">
+                        {hasCustom ? (
+                          <>
+                            <span className="text-purple-400 font-bold">${currentPrice}</span>
+                            <span className="text-[9px] text-white/30 line-through">الأصل: ${prod.defaultPrice}</span>
+                          </>
+                        ) : (
+                          <span className="text-white/60">${prod.defaultPrice}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      {isEditing ? (
+                        <div className="flex gap-2 w-full">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            value={editingPrice}
+                            onChange={(e) => setEditingPrice(e.target.value)}
+                            className="bg-zinc-900 border border-purple-500 rounded-xl px-2 py-1 text-xs text-white focus:outline-none w-20 text-center font-mono"
+                            placeholder="السعر"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSavePrice(prod.key, parseFloat(editingPrice))}
+                            className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-3 py-1 text-[10px] font-bold flex-1"
+                          >
+                            حفظ
+                          </button>
+                          <button
+                            onClick={() => setEditingKey(null)}
+                            className="bg-white/10 hover:bg-white/20 text-white rounded-xl px-2 py-1 text-[10px] font-bold"
+                          >
+                            إلغاء
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 w-full">
+                          <button
+                            disabled={role !== 'owner' && role !== 'manager'}
+                            onClick={() => {
+                              setEditingKey(prod.key);
+                              setEditingPrice(currentPrice.toString());
+                            }}
+                            className="bg-purple-600/20 border border-purple-500/30 text-purple-400 hover:bg-purple-600/30 transition-all rounded-xl py-1 text-[10px] font-bold flex-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            تعديل السعر
+                          </button>
+                          {hasCustom && (
+                            <button
+                              disabled={role !== 'owner' && role !== 'manager'}
+                              onClick={() => handleResetPrice(prod.key)}
+                              className="bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all rounded-xl px-2 py-1 text-[9px] font-bold disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                              title="إعادة السعر للمصنع"
+                            >
+                              افتراضي
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Invoices */}
           <div className="lg:col-span-2 space-y-6">
@@ -560,9 +882,16 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold truncate">{u.name}</p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                              <p className="text-white/40 text-[10px] truncate">{u.email}</p>
                              <span className="text-blue-400 text-[10px] font-mono">{u.referralCode}</span>
+                             {u.method && (
+                               <span className={`text-[9px] px-2 py-0.5 rounded-md leading-none ${
+                                 u.method === 'Google' ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400' : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                               }`}>
+                                 {u.method}
+                               </span>
+                             )}
                           </div>
                         </div>
                         {role === 'owner' && !admins.find(a => a.uid === u.uid) && (

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
+import { db } from "../lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 const sections = [
   { 
@@ -44,13 +46,31 @@ export default function SocialServices() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     trackSectionVisit("خدمات السوشيال ميديا (Social)");
     const handleCurrencyChange = () => setCurrency(getCurrency());
     window.addEventListener('currencyChange', handleCurrencyChange);
-    return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+
+    // Watch for custom prices
+    const unsubPrices = onSnapshot(collection(db, 'prices'), (snapshot) => {
+      const pm: Record<string, number> = {};
+      snapshot.docs.forEach(doc => {
+        pm[doc.id] = doc.data().price;
+      });
+      setCustomPrices(pm);
+    });
+
+    return () => {
+      window.removeEventListener('currencyChange', handleCurrencyChange);
+      unsubPrices();
+    };
   }, []);
+
+  const getServicePrice = (service: any) => {
+    return customPrices[service.name] !== undefined ? customPrices[service.name] : service.price;
+  };
 
   const toggleCurrency = () => {
     const newCurrency = currency === 'USD' ? 'SYP' : 'USD';
@@ -59,7 +79,8 @@ export default function SocialServices() {
   };
 
   const handleServiceClick = (service: any) => {
-    setSelectedService(service);
+    const activePrice = getServicePrice(service);
+    setSelectedService({ ...service, price: activePrice });
     setIsModalOpen(true);
   };
 
@@ -115,26 +136,29 @@ export default function SocialServices() {
                 {section.title}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredServices.map((service, idx) => (
-                  <motion.div
-                    key={idx}
-                    whileHover={{ y: -5 }}
-                    onClick={() => handleServiceClick(service)}
-                    className="card-glass rounded-3xl p-8 cursor-pointer group text-center"
-                  >
-                    <div className={`w-16 h-16 bg-gradient-to-br ${service.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-all`}>
-                      <ShieldCheck size={32} className="text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
-                    <p className="text-white/60 text-sm mb-4">آمن وموثوق بنسبة 100%</p>
-                    <div className="bg-white/10 px-4 py-2 rounded-full inline-block text-blue-300 font-bold mb-6">
-                      تبدأ من {formatPrice(service.price, currency)}
-                    </div>
-                    <button className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl hover:bg-white/20 transition-all font-bold">
-                      اطلب الآن
-                    </button>
-                  </motion.div>
-                ))}
+                {filteredServices.map((service, idx) => {
+                  const activePrice = getServicePrice(service);
+                  return (
+                    <motion.div
+                      key={idx}
+                      whileHover={{ y: -5 }}
+                      onClick={() => handleServiceClick(service)}
+                      className="card-glass rounded-3xl p-8 cursor-pointer group text-center"
+                    >
+                      <div className={`w-16 h-16 bg-gradient-to-br ${service.color} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-all`}>
+                        <ShieldCheck size={32} className="text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
+                      <p className="text-white/60 text-sm mb-4">آمن وموثوق بنسبة 100%</p>
+                      <div className="bg-white/10 px-4 py-2 rounded-full inline-block text-blue-300 font-bold mb-6">
+                        تبدأ من {formatPrice(activePrice, currency)}
+                      </div>
+                      <button className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl hover:bg-white/20 transition-all font-bold">
+                        اطلب الآن
+                      </button>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           );

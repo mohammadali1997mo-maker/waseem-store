@@ -173,6 +173,13 @@ async function startServer() {
     }
   });
 
+  // Serve input_file images from root workspace
+  app.get("/input_file_*.png", (req, res) => {
+    const filename = path.basename(req.path);
+    const filePath = path.join(process.cwd(), filename);
+    res.sendFile(filePath);
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -183,6 +190,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
+    app.use(express.static(process.cwd())); // Serve files in root workspace like input_file_0.png
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
