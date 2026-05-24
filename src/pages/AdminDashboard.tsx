@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../lib/firebase';
+import { db, auth, onAuthStateChanged, signOut } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, getDocs, limit, where, doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import * as XLSX from 'xlsx';

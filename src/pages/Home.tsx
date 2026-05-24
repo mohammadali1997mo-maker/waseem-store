@@ -2,8 +2,8 @@ import { Rocket, Gamepad, MessageSquare, Megaphone, Users, Search, LogIn, User, 
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { auth } from "../lib/firebase";
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "firebase/auth";
+import { auth, onAuthStateChanged, signOut } from "../lib/firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { logUser, trackSectionVisit } from "../lib/db";
 
 import { formatPrice, getCurrency } from "../lib/currency";
