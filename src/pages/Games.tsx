@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
-import { db } from "../lib/firebase";
+import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 
 const packages = [
@@ -25,6 +25,14 @@ export default function Games() {
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubAuth();
+  }, []);
 
   useEffect(() => {
     // Set initial quantities
@@ -69,6 +77,10 @@ export default function Games() {
   );
 
   const handleBuyClick = (pkg: any, index: number) => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
     const qty = quantities[index] || 1;
     const activePrice = getPkgPrice(pkg);
     const finalPrice = (activePrice * qty).toFixed(2);
@@ -136,7 +148,9 @@ export default function Games() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-1">{pkg.name}</h3>
                 <p className="text-white/60 text-sm mb-4">{pkg.package}</p>
-                <p className="text-2xl font-black text-white mb-6">{formatPrice(activePrice, currency)}</p>
+                <p className="text-2xl font-black text-white mb-6">
+                  {isLoggedIn ? formatPrice(activePrice, currency) : "🔒 سجل الدخول لرؤية السعر"}
+                </p>
 
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <span className="text-white/70 text-sm">الكمية:</span>
@@ -149,7 +163,9 @@ export default function Games() {
                   />
                 </div>
 
-                <p className="text-white/50 text-sm mb-6 underline">الإجمالي: {formatPrice(totalPrice, currency)}</p>
+                <p className="text-white/50 text-sm mb-6 underline">
+                  الإجمالي: {isLoggedIn ? formatPrice(totalPrice, currency) : "🔒 سجل الدخول"}
+                </p>
 
                 <button 
                   onClick={() => handleBuyClick(pkg, originalIndex)}

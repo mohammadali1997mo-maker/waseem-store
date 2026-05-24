@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
-import { db } from "../lib/firebase";
+import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 
 const sections = [
@@ -47,6 +47,14 @@ export default function SocialServices() {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubAuth();
+  }, []);
 
   useEffect(() => {
     trackSectionVisit("خدمات السوشيال ميديا (Social)");
@@ -79,6 +87,10 @@ export default function SocialServices() {
   };
 
   const handleServiceClick = (service: any) => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
     const activePrice = getServicePrice(service);
     setSelectedService({ ...service, price: activePrice });
     setIsModalOpen(true);
@@ -151,7 +163,7 @@ export default function SocialServices() {
                       <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
                       <p className="text-white/60 text-sm mb-4">آمن وموثوق بنسبة 100%</p>
                       <div className="bg-white/10 px-4 py-2 rounded-full inline-block text-blue-300 font-bold mb-6">
-                        تبدأ من {formatPrice(activePrice, currency)}
+                        {isLoggedIn ? `تبدأ من ${formatPrice(activePrice, currency)}` : "🔒 سجل الدخول لرؤية السعر"}
                       </div>
                       <button className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl hover:bg-white/20 transition-all font-bold">
                         اطلب الآن

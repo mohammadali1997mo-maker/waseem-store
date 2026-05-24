@@ -6,7 +6,9 @@ import {
   updateDoc, 
   increment, 
   getDoc, 
-  serverTimestamp 
+  getDocFromCache,
+  serverTimestamp,
+  arrayUnion
 } from 'firebase/firestore';
 
 export async function logUser(user: any) {
@@ -45,7 +47,8 @@ export async function logUser(user: any) {
       });
     }
   } catch (err: any) {
-    if (err.code === 'unavailable' || err.message?.includes('offline')) {
+    const errMsg = String(err?.message || err || '').toLowerCase();
+    if (err.code === 'unavailable' || errMsg.includes('offline') || errMsg.includes('unavailable')) {
       // Silent in offline mode, Firestore will sync later
       return;
     }
@@ -69,7 +72,8 @@ export async function trackSectionVisit(sectionName: string) {
       });
     }
   } catch (err: any) {
-    if (err.code === 'unavailable' || err.message?.includes('offline')) {
+    const errMsg = String(err?.message || err || '').toLowerCase();
+    if (err.code === 'unavailable' || errMsg.includes('offline') || errMsg.includes('unavailable')) {
       return;
     }
     console.error("trackSectionVisit failed:", err);
@@ -89,3 +93,80 @@ export async function saveInvoice(invoiceData: any) {
     throw err; // Re-throw to handle in UI
   }
 }
+
+export function getOrCreateSessionId(): string {
+  let sid = sessionStorage.getItem('wsim_session_id');
+  if (!sid) {
+    sid = 'sess_' + Math.random().toString(36).substring(2, 11);
+    sessionStorage.setItem('wsim_session_id', sid);
+  }
+  return sid;
+}
+
+export async function trackUserSession(user: any, sectionName?: string) {
+  if (!user) return;
+  try {
+    const sid = getOrCreateSessionId();
+    const sessionRef = doc(db, 'visitor_sessions', sid);
+    
+    let sessionSnap;
+    try {
+      sessionSnap = await getDoc(sessionRef);
+    } catch (docErr: any) {
+      const docErrMsg = String(docErr?.message || docErr || '').toLowerCase();
+      if (docErr.code === 'unavailable' || docErrMsg.includes('offline') || docErrMsg.includes('unavailable')) {
+        try {
+          // Fallback to cache since client is offline
+          sessionSnap = await getDocFromCache(sessionRef);
+        } catch (cacheErr) {
+          // Silent or fall through
+        }
+      } else {
+        throw docErr;
+      }
+    }
+
+    const email = user.email || 'google-user@wsimstore.com';
+    const name = user.displayName || user.email?.split('@')[0] || 'مستخدم';
+    const now = new Date();
+    
+    if (!sessionSnap || !sessionSnap.exists()) {
+      await setDoc(sessionRef, {
+        sessionId: sid,
+        uid: user.uid,
+        email,
+        name,
+        startedAt: now.toISOString(),
+        lastActive: now.toISOString(),
+        durationSeconds: 0,
+        visitorType: user.email === 'wsh020264@gmail.com' ? 'admin' : 'user',
+        sections: sectionName ? [sectionName] : [],
+        pathHistory: sectionName ? [{ name: sectionName, visitedAt: now.toISOString() }] : [],
+      });
+    } else {
+      const data = sessionSnap.data();
+      const started = new Date(data.startedAt || now.toISOString());
+      const diffSeconds = Math.round((now.getTime() - started.getTime()) / 1000);
+      
+      const updates: any = {
+        lastActive: now.toISOString(),
+        durationSeconds: diffSeconds,
+      };
+
+      if (sectionName) {
+        updates.sections = arrayUnion(sectionName);
+        updates.pathHistory = arrayUnion({ name: sectionName, visitedAt: now.toISOString() });
+      }
+
+      await updateDoc(sessionRef, updates);
+    }
+  } catch (err: any) {
+    const errMsg = String(err?.message || err || '').toLowerCase();
+    if (err.code === 'unavailable' || errMsg.includes('offline') || errMsg.includes('unavailable')) {
+      // Quietly return on offline status, let Firestore persistence handle eventual sync
+      return;
+    }
+    console.error("trackUserSession failed:", err);
+  }
+}
+

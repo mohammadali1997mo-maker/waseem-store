@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
 import { trackSectionVisit } from "../lib/db";
-import { db } from "../lib/firebase";
+import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 
 const apps = [
@@ -134,6 +134,14 @@ export default function SoulShell() {
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubAuth();
+  }, []);
 
   useEffect(() => {
     // Set initial quantities
@@ -179,6 +187,10 @@ export default function SoulShell() {
   });
 
   const handleChargeClick = (app: any, index: number) => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
     const qty = quantities[index] || app.diamonds;
     const activePrice = getDocPrice(app);
     const price = ((activePrice / app.diamonds) * qty).toFixed(2);
@@ -264,7 +276,11 @@ export default function SoulShell() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{app.name}</h3>
                 <p className="text-white/60 text-sm mb-4">
-                  {app.diamonds} قطعة - {formatPrice(activePrice, currency)}
+                  {isLoggedIn ? (
+                    `${app.diamonds} قطعة - ${formatPrice(activePrice, currency)}`
+                  ) : (
+                    "🔒 سجل الدخول لرؤية السعر"
+                  )}
                 </p>
 
                 <div className="mb-6">
@@ -279,7 +295,9 @@ export default function SoulShell() {
 
                 <div className="flex justify-between items-center mb-6 px-4">
                   <span className="text-white/70 text-sm">السعر الإجمالي:</span>
-                  <span className="text-green-400 font-bold text-lg">{formatPrice(totalPrice, currency)}</span>
+                  <span className="text-green-400 font-bold text-lg">
+                    {isLoggedIn ? formatPrice(totalPrice, currency) : "🔒 سجل الدخول"}
+                  </span>
                 </div>
 
                 <button 

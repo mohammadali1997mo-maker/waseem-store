@@ -187,6 +187,7 @@ export default function AdminDashboard() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -208,6 +209,9 @@ export default function AdminDashboard() {
   const [editingPrice, setEditingPrice] = useState<string>('');
   const [priceSearch, setPriceSearch] = useState<string>('');
   const [priceFilter, setPriceFilter] = useState<string>('all');
+
+  const [invoicePaymentFilter, setInvoicePaymentFilter] = useState<string>('all');
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<string>('all');
 
   const navigate = useNavigate();
 
@@ -278,6 +282,11 @@ export default function AdminDashboard() {
       setStats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const qSessions = query(collection(db, 'visitor_sessions'), orderBy('lastActive', 'desc'), limit(100));
+    const unsubSessions = onSnapshot(qSessions, (snapshot) => {
+      setSessions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     const unsubAdmins = onSnapshot(collection(db, 'admins'), (snapshot) => {
       setAdmins(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
@@ -294,6 +303,7 @@ export default function AdminDashboard() {
       unsubInvoices();
       unsubUsers();
       unsubStats();
+      unsubSessions();
       unsubAdmins();
       unsubPrices();
     };
@@ -806,59 +816,216 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Invoices */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Receipt className="text-purple-400" />
                 آخر فواتير المبيعات
               </h2>
+              
+              <div className="flex flex-wrap items-center gap-2 text-right">
+                {/* Payment Method Filter */}
+                <select
+                  value={invoicePaymentFilter}
+                  onChange={(e) => setInvoicePaymentFilter(e.target.value)}
+                  className="bg-white/10 text-white border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 cursor-pointer"
+                >
+                  <option value="all" className="bg-slate-900 text-white">طريقة الدفع: الكل</option>
+                  <option value="stripe" className="bg-slate-900 text-white">بطاقة (Stripe)</option>
+                  <option value="qr" className="bg-slate-900 text-white">كاش (QR)</option>
+                </select>
+
+                {/* Status Filter */}
+                <select
+                  value={invoiceStatusFilter}
+                  onChange={(e) => setInvoiceStatusFilter(e.target.value)}
+                  className="bg-white/10 text-white border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 cursor-pointer"
+                >
+                  <option value="all" className="bg-slate-900 text-white">حالة الطلب: الكل</option>
+                  <option value="تم الدفع" className="bg-slate-900 text-white">تم الدفع</option>
+                  <option value="قيد المعالجة" className="bg-slate-900 text-white">قيد المعالجة</option>
+                  <option value="مكتمل" className="bg-slate-900 text-white">مكتمل</option>
+                </select>
+              </div>
             </div>
-            <div className="space-y-4">
-              {invoices.length === 0 ? (
-                <div className="text-center py-12 card-glass rounded-3xl opacity-40">لا توجد فواتير بعد</div>
-              ) : (
-                invoices.map((inv) => (
-                  <motion.div 
-                    key={inv.id}
-                    layoutId={inv.id}
-                    className="card-glass p-6 rounded-2xl border-white/5 hover:border-white/20 transition-all flex justify-between items-center"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-lg">{inv.service}</span>
-                        <div className="flex gap-1">
-                          <span className={`text-[9px] uppercase px-2 py-0.5 rounded-full ${
-                            inv.paymentMethod === 'stripe' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                          }`}>
-                            {inv.paymentMethod}
-                          </span>
-                          {inv.referralCode && (
-                            <span className="text-[9px] bg-white/10 text-white/40 px-2 py-0.5 rounded-full font-mono">
-                              {inv.referralCode}
-                            </span>
+
+            {(() => {
+              const filtered = invoices.filter((inv) => {
+                const matchesPayment = invoicePaymentFilter === 'all' || inv.paymentMethod === invoicePaymentFilter;
+                const currentStatus = inv.status || 'تم الدفع';
+                const matchesStatus = invoiceStatusFilter === 'all' || currentStatus === invoiceStatusFilter;
+                return matchesPayment && matchesStatus;
+              });
+
+              return (
+                <div className="space-y-4">
+                  {filtered.length === 0 ? (
+                    <div className="text-center py-12 card-glass rounded-3xl opacity-40">لا توجد فواتير مطابقة للتصفية حالياً</div>
+                  ) : (
+                    filtered.map((inv) => (
+                      <motion.div 
+                        key={inv.id}
+                        layoutId={inv.id}
+                        className="card-glass p-6 rounded-2xl border-white/5 hover:border-white/20 transition-all flex justify-between items-center whitespace-normal"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="font-bold text-lg">{inv.service}</span>
+                            <div className="flex gap-1 flex-wrap">
+                              <span className={`text-[9px] uppercase px-2 py-0.5 rounded-full ${
+                                inv.paymentMethod === 'stripe' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                              }`}>
+                                {inv.paymentMethod}
+                              </span>
+                              {inv.referralCode && (
+                                <span className="text-[9px] bg-white/10 text-white/40 px-2 py-0.5 rounded-full font-mono">
+                                  {inv.referralCode}
+                                </span>
+                              )}
+                              <span className={`text-[9.5px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                (!inv.status || inv.status === 'تم الدفع')
+                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                  : inv.status === 'قيد المعالجة'
+                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              }`}>
+                                {inv.status || 'تم الدفع'}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-white/40 text-sm">{inv.userName} • {inv.userEmail}</p>
+                          <p className="text-white/20 text-[10px] font-mono">{inv.orderId}</p>
+                          
+                          {/* Status select controller */}
+                          <div className="pt-2 flex items-center gap-2">
+                            <span className="text-white/40 text-[10px]">تعديل الحالة:</span>
+                            <select
+                              value={inv.status || 'تم الدفع'}
+                              onChange={async (e) => {
+                                try {
+                                  await updateDoc(doc(db, 'invoices', inv.id), { status: e.target.value });
+                                } catch (err) {
+                                  console.error("Failed to update status", err);
+                                }
+                              }}
+                              className="bg-black/30 text-white border border-white/10 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-blue-500 cursor-pointer"
+                            >
+                              <option value="تم الدفع" className="bg-slate-900 text-white">تم الدفع</option>
+                              <option value="قيد المعالجة" className="bg-slate-900 text-white">قيد المعالجة</option>
+                              <option value="مكتمل" className="bg-slate-900 text-white">مكتمل</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <div className="text-green-400 font-bold text-xl">
+                            {inv.currency === 'SYP' ? formatPrice(inv.amount, 'SYP') : `$${inv.amount}`}
+                          </div>
+                          <div className="text-white/30 text-[10px] flex items-center gap-1 justify-end">
+                            {inv.currency === 'SYP' && <span className="mr-1">(${inv.amount} USD)</span>}
+                            <Clock size={12} />
+                            {inv.date}
+                          </div>
+                          {inv.note && (
+                            <div className="mt-2 text-[10px] text-purple-400/80 italic text-right max-w-[200px]">
+                              💡 {inv.note}
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <p className="text-white/40 text-sm">{inv.userName} • {inv.userEmail}</p>
-                      <p className="text-white/20 text-[10px] font-mono">{inv.orderId}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-green-400 font-bold text-xl">
-                        {inv.currency === 'SYP' ? formatPrice(inv.amount, 'SYP') : `$${inv.amount}`}
-                      </div>
-                      <div className="text-white/30 text-[10px] flex items-center gap-1 justify-end">
-                        {inv.currency === 'SYP' && <span className="mr-1">(${inv.amount} USD)</span>}
-                        <Clock size={12} />
-                        {inv.date}
-                      </div>
-                      {inv.note && (
-                        <div className="mt-2 text-[10px] text-purple-400/80 italic text-right">
-                          💡 {inv.note}
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Live Session Stay Logs & Section Journeys */}
+            <div className="space-y-6 pt-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Clock className="text-blue-400" />
+                سجل جلسات ونشاط العملاء (من دخل والمدة والأقسام)
+              </h2>
+              <div className="card-glass p-6 rounded-3xl space-y-4">
+                {sessions.length === 0 ? (
+                  <div className="text-center py-12 text-white/30">لا توجد سجلات نشاط للعملاء حالياً</div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    {sessions.map((sess) => {
+                      const durationStr = sess.durationSeconds !== undefined 
+                        ? (sess.durationSeconds < 60 
+                            ? `${sess.durationSeconds} ثانية` 
+                            : `${Math.floor(sess.durationSeconds / 60)} دقيقة و ${sess.durationSeconds % 60} ثانية`)
+                        : '0 ثانية';
+
+                      return (
+                        <div 
+                          key={sess.id}
+                          className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-blue-500/20 transition-all space-y-3 text-right"
+                        >
+                          <div className="flex justify-between items-start flex-wrap gap-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
+                                {sess.name?.charAt(0) || 'U'}
+                              </div>
+                              <div className="text-right">
+                                <h4 className="font-bold text-sm text-white">{sess.name}</h4>
+                                <p className="text-white/40 text-xs">{sess.email}</p>
+                              </div>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-blue-300 font-mono text-xs block bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                                ⏱️ مكوثه: {durationStr}
+                              </span>
+                              <span className="text-white/20 text-[10px] block mt-1 font-mono text-left">
+                                الدخول: {sess.startedAt ? new Date(sess.startedAt).toLocaleTimeString('ar-SY', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Pages visited */}
+                          <div className="pt-2 border-t border-white/5 text-right">
+                            <span className="text-white/50 text-xs block mb-1.5 font-bold">الأقسام والصفحات التي تجول بها (ملخص):</span>
+                            <div className="flex flex-wrap gap-1.5 justify-start">
+                              {sess.sections && sess.sections.length > 0 ? (
+                                sess.sections.map((section: string, sIdx: number) => (
+                                  <span 
+                                    key={sIdx}
+                                    className="bg-white/10 text-white/80 border border-white/10 px-2.5 py-1 rounded-lg text-[10px]"
+                                  >
+                                    📍 {section}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-white/30 text-[10px] italic">لم يتنقل بين الأقسام بعد</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Chronological path history timeline */}
+                          {sess.pathHistory && sess.pathHistory.length > 0 && (
+                            <div className="pt-3 border-t border-white/5 text-right">
+                              <span className="text-blue-400 text-xs block mb-2 font-bold">🚀 مسار التصفح بالترتيب الزمني (خط زمني):</span>
+                              <div className="relative border-r border-blue-500/20 pr-4 mr-2 space-y-2.5">
+                                {sess.pathHistory.map((pathItem: any, pIdx: number) => {
+                                  const timeStr = pathItem.visitedAt 
+                                    ? new Date(pathItem.visitedAt).toLocaleTimeString('ar-SY', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                                    : '-';
+                                  return (
+                                    <div key={pIdx} className="relative flex items-center justify-between gap-2 text-xs">
+                                      {/* Dot */}
+                                      <div className="absolute -right-[21px] w-2 h-2 rounded-full bg-blue-400 shadow-sm" />
+                                      <span className="text-white/90 font-medium">📍 {pathItem.name}</span>
+                                      <span className="text-white/40 text-[10px] font-mono">{timeStr}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

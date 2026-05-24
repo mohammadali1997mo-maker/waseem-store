@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { WifiOff } from "lucide-react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,6 +14,47 @@ import SocialServices from "./pages/SocialServices";
 import Payment from "./pages/Payment";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
+import { auth, onAuthStateChanged } from "./lib/firebase";
+import { trackUserSession } from "./lib/db";
+
+function SessionTracker() {
+  const location = useLocation();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      let pathName = "";
+      if (location.pathname === "/") pathName = "الصفحة الرئيسية";
+      else if (location.pathname === "/games") pathName = "شحن الألعاب";
+      else if (location.pathname === "/soul-shell") pathName = "شحن سول شيل";
+      else if (location.pathname === "/social-services") pathName = "تمويل سوشيال ميديا";
+      else if (location.pathname === "/payment") pathName = "صفحة دفع الفواتير";
+      else if (location.pathname === "/admin") pathName = "لوحة التحكم للمسؤول";
+      else if (location.pathname === "/login") pathName = "صفحة تسجيل الدخول";
+
+      if (pathName) {
+        trackUserSession(user, pathName);
+      }
+    }
+  }, [location.pathname, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      trackUserSession(user);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  return null;
+}
 
 function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -51,6 +92,7 @@ export default function App() {
     <Router>
       <div dir="rtl" className="font-sans">
         <OfflineBanner />
+        <SessionTracker />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
