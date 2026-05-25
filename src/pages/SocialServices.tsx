@@ -96,9 +96,9 @@ export default function SocialServices() {
     setIsModalOpen(true);
   };
 
-  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string) => {
+  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string, playerId?: string, playerName?: string) => {
     setIsModalOpen(false);
-    navigate(`/payment?service=${encodeURIComponent(selectedService.name)}&amount=${selectedService.price}&pid=${productId}&idnum=${identityNumber}&code=${promoCode || ''}`);
+    navigate(`/payment?service=${encodeURIComponent(selectedService.name)}&amount=${selectedService.price}&pid=${productId}&idnum=${identityNumber}&code=${promoCode || ''}&playerId=${encodeURIComponent(playerId || '')}&playerName=${encodeURIComponent(playerName || '')}`);
   };
 
   return (

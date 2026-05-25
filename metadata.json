@@ -1,6 +1,6 @@
-# Stripe Secret Key (Required for real payments)
-STRIPE_SECRET_KEY=
-# Stripe Publishable Key (Required for client side)
-VITE_STRIPE_PUBLISHABLE_KEY=
-# WhatsApp Notification Destination
-WHATSAPP_NUMBER=00963943467444
+{
+  "name": "وسيم ستور - Waseem Store",
+  "description": "منصة شحن شدات الألعاب وتطبيقات الدردشة وخدمات التواصل الاجتماعي",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,4 +1,4 @@
-import { Rocket, Gamepad, MessageSquare, Megaphone, Users, Search, LogIn, User, ShieldCheck } from "lucide-react";
+import { Rocket, Gamepad, MessageSquare, Megaphone, Users, Search, LogIn, User, ShieldCheck, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
@@ -13,6 +13,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
+  const [showUnauthorizedAlert, setShowUnauthorizedAlert] = useState(false);
 
   const toggleCurrency = () => {
     const newCurrency = currency === 'USD' ? 'SYP' : 'USD';
@@ -20,6 +21,18 @@ export default function Home() {
     localStorage.setItem('wsimCurrency', newCurrency);
     window.dispatchEvent(new Event('currencyChange'));
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "unauthorized") {
+      setShowUnauthorizedAlert(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const timer = setTimeout(() => {
+        setShowUnauthorizedAlert(false);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     const handleCurrencyChange = () => setCurrency(getCurrency());
@@ -84,7 +97,34 @@ export default function Home() {
   const filteredSections = sections.filter(s => s.title.includes(search));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      {/* Dynamic Unauthorized Access Banner */}
+      {showUnauthorizedAlert && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] w-full max-w-md px-4">
+          <motion.div 
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="bg-red-950/90 backdrop-blur-md border border-red-500/40 text-red-200 p-5 rounded-2xl flex items-center justify-between gap-4 shadow-2xl"
+          >
+            <div className="flex items-center gap-3 text-right">
+              <div className="bg-red-500/10 p-2 rounded-xl text-red-400 shrink-0">
+                <ShieldCheck size={24} className="text-red-500" />
+              </div>
+              <div className="font-sans">
+                <p className="font-extrabold text-sm text-red-400">محاولة دخول غير مصرحة</p>
+                <p className="text-xs opacity-80 mt-1">عذراً، هذا الحساب لا يملك صلاحيات الوصول إلى لوحة تحكم المسؤول.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowUnauthorizedAlert(false)}
+              className="text-red-400 hover:text-red-200 transition-colors shrink-0 p-1"
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        </div>
+      )}
+
       <header className="py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
@@ -106,13 +146,13 @@ export default function Home() {
                 {currency === 'USD' ? '🇺🇸 Dollar' : '🇸🇾 ليرة سورية'}
               </button>
               {currentUser ? (
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1 font-sans">
                   <button 
-                    onClick={handleLogout}
-                    className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/20 transition-all flex items-center gap-2"
+                    onClick={() => navigate('/profile')}
+                    className="bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border border-amber-500/30 text-amber-400 px-6 py-2 rounded-xl hover:border-amber-500/60 transition-all flex items-center gap-2 font-black shadow-lg shadow-amber-500/5 active:scale-95"
                   >
-                    <User size={18} />
-                    {currentUser.name}
+                    <User size={18} className="text-amber-400" />
+                    <span>حسابي الشخصي</span>
                   </button>
                   <div className="flex items-center gap-2 px-2">
                     <span className="text-[9px] text-white/40 uppercase tracking-tighter">الكود:</span>
@@ -171,18 +211,6 @@ export default function Home() {
               </div>
             </motion.div>
           ))}
-        </div>
-
-        <div className="flex justify-center gap-4 mt-20">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="card-glass text-white/40 text-xs px-4 py-2 rounded-full flex items-center gap-2 hover:text-white/80 transition-all cursor-pointer"
-            onClick={() => navigate('/admin/login')}
-          >
-            <ShieldCheck size={14} />
-            لوحة تحكم المسؤول
-          </motion.div>
         </div>
 
         <div className="text-center mt-20">

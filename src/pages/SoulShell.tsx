@@ -198,10 +198,10 @@ export default function SoulShell() {
     setIsModalOpen(true);
   };
 
-  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string) => {
+  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string, playerId?: string, playerName?: string) => {
     setIsModalOpen(false);
     // Proceed to payment with all data
-    navigate(`/payment?service=${encodeURIComponent(selectedApp.name)}&amount=${selectedApp.price}&pid=${productId}&idnum=${identityNumber}&code=${promoCode || ''}`);
+    navigate(`/payment?service=${encodeURIComponent(selectedApp.name)}&amount=${selectedApp.price}&pid=${productId}&idnum=${identityNumber}&code=${promoCode || ''}&playerId=${encodeURIComponent(playerId || '')}&playerName=${encodeURIComponent(playerName || '')}`);
   };
 
   return (

@@ -88,9 +88,9 @@ export default function Games() {
     setIsModalOpen(true);
   };
 
-  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string) => {
+  const confirmOrder = (productId: string, identityNumber: string, promoCode?: string, playerId?: string, playerName?: string) => {
     setIsModalOpen(false);
-    navigate(`/payment?service=${encodeURIComponent(selectedPackage.service)}&amount=${selectedPackage.finalPrice}&pid=${productId}&idnum=${identityNumber}&qty=${selectedPackage.qty}&code=${promoCode || ''}`);
+    navigate(`/payment?service=${encodeURIComponent(selectedPackage.service)}&amount=${selectedPackage.finalPrice}&pid=${productId}&idnum=${identityNumber}&qty=${selectedPackage.qty}&code=${promoCode || ''}&playerId=${encodeURIComponent(playerId || '')}&playerName=${encodeURIComponent(playerName || '')}`);
   };
 
   return (

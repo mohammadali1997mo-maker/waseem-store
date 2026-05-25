@@ -8,7 +8,8 @@ import {
   getDoc, 
   getDocFromCache,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  runTransaction
 } from 'firebase/firestore';
 
 export async function logUser(user: any) {
@@ -37,6 +38,7 @@ export async function logUser(user: any) {
         ...userData,
         referralCode: generateCode(),
         registeredAt: new Date().toISOString(),
+        ucBalance: 0,
       });
     } else {
       // Keep existing referralCode if it exists
@@ -44,6 +46,8 @@ export async function logUser(user: any) {
       await updateDoc(userRef, {
         ...userData,
         referralCode: existingData.referralCode || generateCode(),
+        // Ensure ucBalance is initialized if it wasn't there
+        ucBalance: existingData.ucBalance !== undefined ? existingData.ucBalance : 0,
       });
     }
   } catch (err: any) {
@@ -53,6 +57,112 @@ export async function logUser(user: any) {
       return;
     }
     console.error("logUser failed:", err);
+  }
+}
+
+export async function updateUserUCBalance(uid: string, amount: number) {
+  try {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+      ucBalance: increment(amount),
+      lifetimeAccumulatedUC: increment(amount) // Ensure manual adjustments count as accumulation points
+    });
+    console.log(`Successfully credited ${amount} UC to user ${uid}`);
+  } catch (err) {
+    console.error("updateUserUCBalance failed:", err);
+    throw err;
+  }
+}
+
+export async function fulfillDepositTransaction(invoiceId: string, newStatus: string) {
+  try {
+    const result = await runTransaction(db, async (transaction) => {
+      const invoiceRef = doc(db, 'invoices', invoiceId);
+      const invoiceSnap = await transaction.get(invoiceRef);
+      
+      if (!invoiceSnap.exists()) {
+        throw new Error("الفاتورة غير موجودة");
+      }
+      
+      const invData = invoiceSnap.data();
+      const isManualTopup = invData.paymentMethod === "شام كاش - إيداع محفظة يدوي";
+      const isApproving = newStatus === "مكتمل" || newStatus === "تم الشحن";
+      
+      if (isManualTopup && isApproving && !invData.credited) {
+        const uid = invData.uid;
+        if (!uid) throw new Error("آيدي المستخدم غير موجود بالفاتورة");
+        
+        const qty = parseInt(invData.qty || "0", 10);
+        const bonusQty = parseInt(invData.bonusQty || "0", 10);
+        const ucToAdd = qty + bonusQty;
+        
+        const userRef = doc(db, 'users', uid);
+        const userSnap = await transaction.get(userRef);
+        
+        if (!userSnap.exists()) {
+          throw new Error("المستخدم غير موجود بالنظام");
+        }
+        
+        // Transactionally update user parameters
+        transaction.update(userRef, {
+          ucBalance: increment(ucToAdd),
+          lifetimeAccumulatedUC: increment(ucToAdd)
+        });
+        
+        // Transactionally update invoice status and claim flag
+        transaction.update(invoiceRef, { 
+          status: newStatus, 
+          credited: true 
+        });
+        
+        return { success: true, ucAdded: ucToAdd };
+      } else {
+        // Just update status if not a topup, or if already credited, or not approving status
+        transaction.update(invoiceRef, { status: newStatus });
+        return { success: true, ucAdded: 0 };
+      }
+    });
+    console.log("fulfillDepositTransaction successfully processed:", result);
+    return result;
+  } catch (err) {
+    console.error("fulfillDepositTransaction transaction failed:", err);
+    throw err;
+  }
+}
+
+export async function createWithdrawalRequest(uid: string, withdrawalData: any) {
+  try {
+    await runTransaction(db, async (transaction) => {
+      const userRef = doc(db, 'users', uid);
+      const userSnap = await transaction.get(userRef);
+      
+      if (!userSnap.exists()) {
+        throw new Error("المستخدم غير موجود");
+      }
+      
+      const currentBalance = userSnap.data()?.ucBalance || 0;
+      if (currentBalance < withdrawalData.amount) {
+        throw new Error("رصيدك الحالي غير كافٍ لإتمام السحب");
+      }
+
+      // 1. Debit the user's balance transactionally
+      transaction.update(userRef, {
+        ucBalance: increment(-withdrawalData.amount)
+      });
+
+      // 2. Create withdrawal record transactionally
+      const withdrawalRef = doc(db, 'withdrawals', withdrawalData.id);
+      transaction.set(withdrawalRef, {
+        ...withdrawalData,
+        status: 'قيد المعالجة',
+        createdAt: new Date().toISOString()
+      });
+    });
+
+    console.log(`Successfully completed transactional withdrawal request of ${withdrawalData.amount} UC for user ${uid}`);
+  } catch (err) {
+    console.error("createWithdrawalRequest transaction failed:", err);
+    throw err;
   }
 }
 
@@ -169,4 +279,118 @@ export async function trackUserSession(user: any, sectionName?: string) {
     console.error("trackUserSession failed:", err);
   }
 }
+
+/**
+ * Adds a deposit (invoice) record to the database with strict type enforcement.
+ * Converts potentially stringified numerical inputs to actual numbers.
+ */
+export async function addDeposit(depositData: {
+  orderId: string;
+  uid: string;
+  username: string;
+  email: string;
+  service: string;
+  amount: string | number;
+  currency: 'USD' | 'SYP';
+  qty: string | number;
+  paymentMethod: string;
+  bonusQty?: string | number;
+  pid?: string;
+  [key: string]: any;
+}) {
+  try {
+    const depositRef = doc(db, 'invoices', depositData.orderId);
+    
+    const parsedAmount = typeof depositData.amount === 'string' ? parseFloat(depositData.amount) : depositData.amount;
+    const parsedQty = typeof depositData.qty === 'string' ? parseInt(depositData.qty, 10) : depositData.qty;
+    const parsedBonusQty = depositData.bonusQty !== undefined 
+      ? (typeof depositData.bonusQty === 'string' ? parseInt(depositData.bonusQty, 10) : depositData.bonusQty) 
+      : 0;
+
+    const sanitizedData = {
+      ...depositData,
+      amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+      qty: isNaN(parsedQty) ? 0 : parsedQty,
+      bonusQty: isNaN(parsedBonusQty) ? 0 : parsedBonusQty,
+      status: depositData.status || 'paid',
+      date: depositData.date || new Date().toISOString(),
+      credited: depositData.credited || false
+    };
+
+    await setDoc(depositRef, sanitizedData);
+    console.log(`[Database Sync] Successfully stored deposit ${depositData.orderId} with typed schemas.`);
+    return { success: true, orderId: depositData.orderId };
+  } catch (err: any) {
+    console.error("[Database Sync] Error registering deposit:", err);
+    throw err;
+  }
+}
+
+/**
+ * Updates a user's wallet balance (UC points or currency balance) with strict type conversion.
+ * Leverages an atomic Firestore transaction to prevent race conditions.
+ */
+export async function updateWalletBalance(uid: string, additionAmount: string | number) {
+  try {
+    const parsedAmount = typeof additionAmount === 'string' ? parseFloat(additionAmount) : additionAmount;
+    if (isNaN(parsedAmount)) {
+      throw new Error("Invalid numeric value provided for wallet balance increment.");
+    }
+
+    const userRef = doc(db, 'users', uid);
+    
+    // Execute atomic update
+    await runTransaction(db, async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error(`User with UID ${uid} does not exist in the database.`);
+      }
+
+      const currentBalance = Number(userSnap.data()?.ucBalance || 0);
+      const newBalance = currentBalance + parsedAmount;
+      const currentLifetime = Number(userSnap.data()?.lifetimeAccumulatedUC || 0);
+      const newLifetime = currentLifetime + (parsedAmount > 0 ? parsedAmount : 0);
+
+      transaction.update(userRef, {
+        ucBalance: newBalance,
+        lifetimeAccumulatedUC: newLifetime
+      });
+    });
+
+    console.log(`[Database Sync] Transaction complete. Updated wallet of UID ${uid} by ${parsedAmount}.`);
+    return { success: true };
+  } catch (err) {
+    console.error("[Database Sync] Error executing atomic updateWalletBalance:", err);
+    throw err;
+  }
+}
+
+/**
+ * Sets the global exchange rate securely in Firestore under `settings/global`.
+ * Ensures the value is treated strictly as a floating-point number.
+ */
+export async function setExchangeRate(newRate: string | number) {
+  try {
+    const parsedRate = typeof newRate === 'string' ? parseFloat(newRate) : newRate;
+    if (isNaN(parsedRate) || parsedRate <= 0) {
+      throw new Error("Invalid exchange rate value. Must be a number greater than 0.");
+    }
+
+    const settingsRef = doc(db, 'settings', 'global');
+    await setDoc(settingsRef, {
+      exchangeRate: parsedRate
+    }, { merge: true });
+
+    // Trigger internal application event notification
+    window.dispatchEvent(new Event('exchangeRateChange'));
+    window.dispatchEvent(new Event('currencyChange'));
+
+    console.log(`[Database Sync] Securely set exchange rate to ${parsedRate}.`);
+    return { success: true, exchangeRate: parsedRate };
+  } catch (err) {
+    console.error("[Database Sync] Error updating exchange rate in Firestore:", err);
+    throw err;
+  }
+}
+
 

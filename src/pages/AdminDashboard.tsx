@@ -27,7 +27,8 @@ import {
   Calendar,
   UserPlus,
   ShieldAlert,
-  Trash2
+  Trash2,
+  Gamepad2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { AdminRole, AdminUser, ROLE_LABELS } from '../types';
@@ -198,6 +199,17 @@ export default function AdminDashboard() {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Exchange Rate Management States
+  const [exchangeRate, setExchangeRate] = useState<number>(15000);
+  const [rateInput, setRateInput] = useState<string>('15000');
+  const [isUpdatingRate, setIsUpdatingRate] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Advanced UC Withdrawals dashboard
+  const [adminWithdrawals, setAdminWithdrawals] = useState<any[]>([]);
+  const [withdrawalFilter, setWithdrawalFilter] = useState("all");
+
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportDateStart, setExportDateStart] = useState('');
   const [exportDateEnd, setExportDateEnd] = useState('');
@@ -299,6 +311,25 @@ export default function AdminDashboard() {
       setPricesSnapshot(pm);
     });
 
+    const qWithdrawals = query(collection(db, 'withdrawals'), orderBy('createdAt', 'desc'), limit(100));
+    const unsubWithdrawals = onSnapshot(qWithdrawals, (snapshot) => {
+      setAdminWithdrawals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      console.warn("Error setting up dynamic withdrawal queue: ", err);
+    });
+
+    const unsubExchangeRate = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
+      if (snap.exists()) {
+        const val = snap.data().exchangeRate;
+        if (typeof val === 'number') {
+          setExchangeRate(val);
+          setRateInput(val.toString());
+        }
+      }
+    }, (err) => {
+      console.warn("Error reading settings exchange rate:", err);
+    });
+
     return () => {
       unsubInvoices();
       unsubUsers();
@@ -306,8 +337,39 @@ export default function AdminDashboard() {
       unsubSessions();
       unsubAdmins();
       unsubPrices();
+      unsubWithdrawals();
+      unsubExchangeRate();
     };
   }, [isAdmin]);
+
+  const handleApproveWithdrawal = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'withdrawals', id), {
+        status: 'تم الشحن',
+        updatedAt: new Date().toISOString()
+      });
+      alert("تم تعليم طلب السحب كمكتمل بنجاح وشحن شدات للاعب!");
+    } catch (err) {
+      console.error(err);
+      alert("فشل تحديث حالة السحب المباشر.");
+    }
+  };
+
+  const handleRejectWithdrawal = async (item: any) => {
+    if (!confirm("هل أنت متأكد من رفض طلب السحب وإرجاع رصيد الشدات إلى محفظة المستخدم بالكامل؟")) return;
+    try {
+      const { updateUserUCBalance } = await import('../lib/db');
+      await updateUserUCBalance(item.uid, item.amount);
+      await updateDoc(doc(db, 'withdrawals', item.id), {
+        status: 'مرفوض',
+        updatedAt: new Date().toISOString()
+      });
+      alert("تم رفض الطلب بنجاح وإرجاع الشدات للرصيد المعتمد بالخزينة.");
+    } catch (err) {
+      console.error(err);
+      alert("فشل عملية الرفض والإرجاع.");
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -346,6 +408,32 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       alert("فشل إعادة تعيين السعر للمصنع");
+    }
+  };
+
+  const handleUpdateExchangeRate = async () => {
+    if (!rateInput || isNaN(Number(rateInput)) || Number(rateInput) <= 0) {
+      alert("يرجى إدخال سعر صرف صحيح أكبر من الصفر");
+      return;
+    }
+    setIsUpdatingRate(true);
+    try {
+      if (role !== 'owner' && role !== 'manager') {
+        alert("لا تملك صلاحيات كافية لتحديث سعر الصرف. يرجى مراجعة المسؤول.");
+        setIsUpdatingRate(false);
+        return;
+      }
+      await setDoc(doc(db, 'settings', 'global'), {
+        exchangeRate: Number(rateInput)
+      });
+      setToastMessage(`تم تحديث سعر صرف الدولار بنجاح إلى ${Number(rateInput).toLocaleString()} ل.س! تم تعميم السعر الجديد وتحديث حسابات المتجر والآلة الحاسبة فورياً.`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 6000);
+    } catch (err: any) {
+      console.error("Failed to update exchange rate in Firestore Settings:", err);
+      alert(`فشل عملية تحديث سعر الصرف: ${err.message}`);
+    } finally {
+      setIsUpdatingRate(false);
     }
   };
 
@@ -541,6 +629,31 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 md:p-8">
+      {/* Beautiful Dynamic success toast notification */}
+      {showToast && (
+        <div id="settings-success-toast" className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] w-full max-w-md px-4">
+          <motion.div 
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="bg-zinc-950 border border-emerald-500/30 text-emerald-100 p-5 rounded-3xl flex items-start gap-4 shadow-2xl relative"
+          >
+            <div className="bg-emerald-500/10 p-2.5 rounded-2xl text-emerald-400 shrink-0">
+              <ShieldCheck size={24} />
+            </div>
+            <div className="font-sans text-right flex-1">
+              <p className="font-extrabold text-[13px] text-emerald-400">تحديث سعر الصرف</p>
+              <p className="text-xs opacity-90 mt-1 leading-relaxed">{toastMessage}</p>
+            </div>
+            <button 
+              onClick={() => setShowToast(false)}
+              className="text-white/20 hover:text-white p-1 rounded-full absolute left-4 top-4 transition-all"
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        </div>
+      )}
+
       {/* Sidebar/Header */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
         <div className="flex items-center gap-4">
@@ -609,37 +722,75 @@ export default function AdminDashboard() {
           </motion.section>
         )}
 
-        {/* Settings Integration */}
-        <section className="card-glass p-6 rounded-3xl border-blue-500/10">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                <Settings size={24} />
+        {/* Settings and Currency Controls Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Settings Integration */}
+          <section className="card-glass p-6 rounded-3xl border-blue-500/10 flex flex-col justify-center">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
+                  <Settings size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold">مزامنة Google Sheets</h3>
+                  <p className="text-white/40 text-sm">اربط مبيعاتك مباشرة بجدول بيانات خارجي</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold">مزامنة Google Sheets</h3>
-                <p className="text-white/40 text-sm">اربط مبيعاتك مباشرة بجدول بيانات خارجي</p>
+              <div className="flex flex-1 max-w-md w-full gap-2">
+                <input 
+                  type="text" 
+                  value={sheetId}
+                  onChange={(e) => saveSheetId(e.target.value)}
+                  placeholder="Spreadsheet ID (معرف الشيت)"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-right"
+                />
+                <button 
+                  onClick={syncAllToSheets}
+                  disabled={isSyncing || (role !== 'owner' && role !== 'manager')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                >
+                  {isSyncing ? <RefreshCw className="animate-spin" size={16} /> : <RefreshCw size={16} />}
+                  مزامنة
+                </button>
               </div>
             </div>
-            <div className="flex flex-1 max-w-md w-full gap-2">
-              <input 
-                type="text" 
-                value={sheetId}
-                onChange={(e) => saveSheetId(e.target.value)}
-                placeholder="Spreadsheet ID (معرف الشيت)"
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
-              <button 
-                onClick={syncAllToSheets}
-                disabled={isSyncing || (role !== 'owner' && role !== 'manager')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                {isSyncing ? <RefreshCw className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-                مزامنة
-              </button>
+          </section>
+
+          {/* Exchange Rate Management Card */}
+          <section className="card-glass p-6 rounded-3xl border-amber-500/15 flex flex-col justify-center relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
+                  <RefreshCw size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold">إدارة أسعار الصرف والعملات</h3>
+                  <p className="text-white/40 text-sm">تعديل سعر صرف $1 دولار لعملة الليرة السورية فورياً</p>
+                </div>
+              </div>
+              <div className="flex flex-1 max-w-md w-full gap-2">
+                <div className="relative flex-1">
+                  <input 
+                    type="number" 
+                    value={rateInput}
+                    onChange={(e) => setRateInput(e.target.value)}
+                    placeholder="سعر الصرف (مثال: 15000)"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pr-4 pl-12 py-2 text-sm font-mono focus:outline-none focus:border-amber-500 text-right"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[10px] font-bold font-mono">ل.س</span>
+                </div>
+                <button 
+                  onClick={handleUpdateExchangeRate}
+                  disabled={isUpdatingRate || (role !== 'owner' && role !== 'manager')}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-neutral-950 px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 disabled:opacity-30 shrink-0 shadow-lg shadow-amber-500/10"
+                >
+                  {isUpdatingRate ? <RefreshCw className="animate-spin" size={14} /> : null}
+                  تحديث سعر الصرف الآن
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -894,6 +1045,13 @@ export default function AdminDashboard() {
                           </div>
                           <p className="text-white/40 text-sm">{inv.userName} • {inv.userEmail}</p>
                           <p className="text-white/20 text-[10px] font-mono">{inv.orderId}</p>
+
+                          {(inv.playerId || inv.playerName) && (
+                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-300 mt-2 font-sans w-fit">
+                              {inv.playerId && <span>🎮 آيدي اللاعب: <strong className="font-mono text-white select-all">{inv.playerId}</strong></span>}
+                              {inv.playerName && <span className="mr-2">👤 الفردية/الاسم: <strong className="text-white">{inv.playerName}</strong></span>}
+                            </div>
+                          )}
                           
                           {/* Status select controller */}
                           <div className="pt-2 flex items-center gap-2">
@@ -902,9 +1060,18 @@ export default function AdminDashboard() {
                               value={inv.status || 'تم الدفع'}
                               onChange={async (e) => {
                                 try {
-                                  await updateDoc(doc(db, 'invoices', inv.id), { status: e.target.value });
-                                } catch (err) {
-                                  console.error("Failed to update status", err);
+                                  const newStatus = e.target.value;
+                                  const { fulfillDepositTransaction } = await import("../lib/db");
+                                  
+                                  const result = await fulfillDepositTransaction(inv.id, newStatus);
+                                  if (result && result.ucAdded > 0) {
+                                    alert(`تم تعبئة وشحن رصيد المستخدم بنجاح بقيمة ${result.ucAdded} UC لمحافظته (شاملة البونص إن وجد)!`);
+                                  } else {
+                                    alert(`تم تحديث حالة الفاتورة بنجاح إلى: ${newStatus}`);
+                                  }
+                                } catch (err: any) {
+                                  console.error("Failed to update status & credit wallet", err);
+                                  alert(`حدث خطأ أثناء تحديث الفاتورة: ${err.message || err}`);
                                 }
                               }}
                               className="bg-black/30 text-white border border-white/10 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-blue-500 cursor-pointer"
@@ -936,6 +1103,108 @@ export default function AdminDashboard() {
                 </div>
               );
             })()}
+
+            {/* Live Withdrawal Queue Management (Waseem Store Exclusive Wallet backend) */}
+            <div className="space-y-6 pt-8 border-t border-white/5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <span className="p-2 bg-amber-500/10 rounded-xl text-amber-400">
+                      <Gamepad2 size={18} />
+                    </span>
+                    <span>طلبات سحب شدات الـ UC الفعالة</span>
+                  </h2>
+                  <p className="text-xs text-white/40 mt-1">طلبات سحب الشدات الفورية من محافظ المستخدمين لشحن آيدي اللعبة</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <select
+                    value={withdrawalFilter}
+                    onChange={(e) => setWithdrawalFilter(e.target.value)}
+                    className="bg-zinc-900 text-white border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500 cursor-pointer text-right"
+                  >
+                    <option value="all">حالة السحب: الكل</option>
+                    <option value="قيد المعالجة">قيد المعالجة</option>
+                    <option value="تم الشحن">تم الشحن والتنفيذ</option>
+                    <option value="مرفوض">مرفوض</option>
+                  </select>
+                </div>
+              </div>
+
+              {(() => {
+                const list = adminWithdrawals.filter(w => {
+                  return withdrawalFilter === "all" || w.status === withdrawalFilter;
+                });
+
+                return (
+                  <div className="space-y-4">
+                    {list.length === 0 ? (
+                      <div className="text-center py-12 card-glass rounded-3xl opacity-40 text-xs">لا توجد طلبات سحب ضمن هذه التصفية حالياً</div>
+                    ) : (
+                      list.map((w) => (
+                        <motion.div 
+                          key={w.id}
+                          layoutId={w.id}
+                          className="card-glass p-5 rounded-2xl border border-white/5 hover:border-amber-500/20 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs"
+                        >
+                          <div className="space-y-2 text-right">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-black text-amber-400 text-base">{w.amount} UC</span>
+                              <span className="text-[10px] bg-white/5 text-white/40 px-2 py-0.5 rounded font-mono select-all select-none">
+                                {w.id}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                                w.status === "قيد المعالجة" 
+                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
+                                  : w.status === "تم الشحن"
+                                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+                                  : "bg-red-500/15 text-red-400 border-red-500/20"
+                              }`}>
+                                {w.status || "قيد المعالجة"}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1 text-white/50">
+                              <p>مقدم الطلب بالمتجر: <strong className="text-white font-medium">{w.userName}</strong> ({w.userEmail})</p>
+                              <p className="flex items-center gap-1.5 font-sans mt-1">
+                                <span>🎮 آيدي المستلم (Player ID):</span> 
+                                <strong className="font-mono text-white text-base bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg select-all tracking-wider">
+                                  {w.playerId}
+                                </strong>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 self-stretch md:self-auto justify-end">
+                            <div className="text-right text-[10px] text-white/30 space-y-0.5">
+                              <div>تاريخ التقديم: {w.createdAt ? new Date(w.createdAt).toLocaleString('ar-EG') : "-"}</div>
+                              {w.updatedAt && <div>آخر حركة: {new Date(w.updatedAt).toLocaleTimeString('ar-EG')}</div>}
+                            </div>
+
+                            {w.status === "قيد المعالجة" && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleApproveWithdrawal(w.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl transition-all"
+                                >
+                                  شحن وتنفيذ
+                                </button>
+                                <button
+                                  onClick={() => handleRejectWithdrawal(w)}
+                                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 font-black px-4 py-2 rounded-xl transition-all"
+                                >
+                                  رفض وإرجاع
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
 
             {/* Live Session Stay Logs & Section Journeys */}
             <div className="space-y-6 pt-6">

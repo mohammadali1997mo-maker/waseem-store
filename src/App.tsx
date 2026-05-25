@@ -14,6 +14,8 @@ import SocialServices from "./pages/SocialServices";
 import Payment from "./pages/Payment";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
+import Profile from "./pages/Profile";
+import AdminRoute from "./components/AdminRoute";
 import { auth, onAuthStateChanged } from "./lib/firebase";
 import { trackUserSession } from "./lib/db";
 
@@ -36,6 +38,7 @@ function SessionTracker() {
       else if (location.pathname === "/soul-shell") pathName = "شحن سول شيل";
       else if (location.pathname === "/social-services") pathName = "تمويل سوشيال ميديا";
       else if (location.pathname === "/payment") pathName = "صفحة دفع الفواتير";
+      else if (location.pathname === "/profile") pathName = "حسابي الشخصي";
       else if (location.pathname === "/admin") pathName = "لوحة التحكم للمسؤول";
       else if (location.pathname === "/login") pathName = "صفحة تسجيل الدخول";
 
@@ -100,7 +103,8 @@ export default function App() {
           <Route path="/soul-shell" element={<SoulShell />} />
           <Route path="/social-services" element={<SocialServices />} />
           <Route path="/payment" element={<Payment />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/login" element={<AdminLogin />} />
         </Routes>
       </div>
