@@ -1,99 +1,15 @@
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // Catch-all deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
+export type AdminRole = 'owner' | 'manager' | 'viewer';
 
-    // Global Helpers
-    function isSignedIn() { return request.auth != null; }
-    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-    
-    // Admin check: checks if a document exists in 'admins' collection with current user's UID
-    // OR if the user email matches the specific admin email (and is verified)
-    function isAdmin() { 
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (request.auth.token.email in ["wsh020264@gmail.com", "mohammadali1997mo@gmail.com"])
-      );
-    }
-
-    // Users Collection
-    match /users/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
-      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastActive', 'method', 'referralCode'])
-      );
-    }
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'name', 'lastActive', 'registeredAt', 'method', 'referralCode']) &&
-             data.keys().size() == 7 &&
-             data.uid == request.auth.uid &&
-             data.email is string && data.email.size() <= 256 &&
-             data.name is string && data.name.size() <= 128 &&
-             data.method is string && data.method.size() <= 50 &&
-             data.referralCode is string && data.referralCode.size() <= 50 &&
-             data.registeredAt is string && data.registeredAt.size() <= 100 &&
-             data.lastActive is string && data.lastActive.size() <= 100;
-    }
-
-    // Invoices Collection
-    match /invoices/{invoiceId} {
-      allow get: if isSignedIn() && (resource.data.userEmail == request.auth.token.email || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isSignedIn() && isValidInvoice(incoming());
-      // No updates for now by users, only admins if needed
-      allow update: if isAdmin() && isValidInvoice(incoming());
-    }
-
-    function isValidInvoice(data) {
-      return data.keys().hasAll(['orderId', 'service', 'amount', 'qty', 'pid', 'idnum', 'userName', 'userEmail', 'date', 'paymentMethod', 'status']) &&
-             data.keys().size() == 11 &&
-             data.userEmail == request.auth.token.email &&
-             data.amount is string &&
-             data.status in ['paid', 'pending'];
-    }
-
-    // Stats Collection
-    match /stats/{sectionId} {
-      allow get, list: if isAdmin();
-      allow create: if isSignedIn() && isValidStat(incoming());
-      allow update: if isSignedIn() && isValidStat(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['visitCount'])
-      );
-    }
-
-    function isValidStat(data) {
-      return data.keys().hasAll(['section', 'visitCount']) &&
-             data.keys().size() == 2 &&
-             data.section is string &&
-             data.visitCount is number;
-    }
-
-    // Prices Collection
-    match /prices/{priceId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Admins Collection (Only readable by admins, managed by owner)
-    match /admins/{adminId} {
-      allow read: if isAdmin();
-      allow write: if isOwner();
-    }
-
-    function isOwner() {
-      return isSignedIn() && (
-        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'owner') ||
-        (request.auth.token.email in ["wsh020264@gmail.com", "mohammadali1997mo@gmail.com"])
-      );
-    }
-  }
+export interface AdminUser {
+  uid: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  addedAt: string;
 }
+
+export const ROLE_LABELS: Record<AdminRole, string> = {
+  owner: 'مالك (Owner)',
+  manager: 'مدير (Manager)',
+  viewer: 'مشاهد (Viewer)',
+};

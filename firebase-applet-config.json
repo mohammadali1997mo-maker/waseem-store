@@ -1,9 +1,10 @@
-{
-  "projectId": "golden-axe-d07pf",
-  "appId": "1:445627866589:web:5b79bbeca5efb6244a2a34",
-  "apiKey": "AIzaSyBu0xJlDmsS4stVUrQKnHgzccUtCrrgWSE",
-  "authDomain": "golden-axe-d07pf.firebaseapp.com",
-  "storageBucket": "golden-axe-d07pf.firebasestorage.app",
-  "messagingSenderId": "445627866589",
-  "measurementId": ""
-}
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
