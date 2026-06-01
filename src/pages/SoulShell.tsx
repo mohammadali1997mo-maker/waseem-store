@@ -1,8 +1,9 @@
-import { ArrowRight, Search, Video, MessageSquare, Users, CheckCircle } from "lucide-react";
+import { ArrowRight, Search, Video, MessageSquare, Users, CheckCircle, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
+import PriceAlertModal from "../components/PriceAlertModal";
 import { trackSectionVisit } from "../lib/db";
 import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -125,6 +126,73 @@ const apps = [
   { name: 'ويل شيل', diamonds: 12000, price: 1.005, category: 'chat', icon: '💎', color: 'from-blue-500 to-purple-500' },
 ];
 
+const MIN_LIMITS: Record<string, number> = {
+  'سول ستار': 10000,
+  'بيغو لايف': 50,
+  'زينا لايف': 10000,
+  'هابي تشات': 10000,
+  'هابي شات': 2000,
+  'أب فن': 30000,
+  '$7 ستار': 3500,
+  'مولي ستار': 10000,
+  'نبض شات': 4000,
+  'تاكا شات': 10000,
+  'لامي شات': 2500,
+  'هوا شات': 2000,
+  'Bobo chat': 20000,
+  'الو شات': 10000,
+  'غولد شات': 500,
+  'مانغو لايف': 5000,
+  'مان شات': 5000,
+  'ستار ميكر': 200,
+  'واهو شات': 10000,
+  'فور فان شات': 20000,
+  'لايكي لايف': 50,
+  'كوكو شات': 8000,
+  'تامي': 10000,
+  'يوهو شات': 10000,
+  'لاما شات': 3000,
+  'ميكو شات': 3250,
+  'هوني جار': 200,
+  'اهلان شات': 2500,
+  'ويغو بارتي': 10000,
+  'بوبو لايف': 15000,
+  'سلام شات': 105000,
+  'تالك تالك': 1500,
+  'بينمو شات': 2000,
+  'ميغو شات': 10000,
+  'يوي تشات': 10000,
+  'سويو': 10000,
+  'سول شات': 6000,
+  'فانسي لايف': 10000,
+  'لايت شات': 3000,
+  'اولاميت شات': 3000,
+  'سوغو': 3000,
+  'sugo': 3000, // addition fallback
+  'سوبر لايف': 150,
+  'هامي بارتي': 10000,
+  'يامي ستار': 2000000,
+  'هلا مي': 15000,
+  'جانكو': 50000,
+  'مرحبا شات': 1500000,
+  'عمار شات': 1500,
+  'يوبي لايف': 500,
+  'شاميت تشات': 15000,
+  'ايمو شات': 5000,
+  'هاي بارتي': 10000,
+  'كواي': 200,
+  'بارتي هيرو': 50,
+  'هووبي': 12000,
+  'آشا لايف': 10000,
+  'سوماتش': 10000,
+  'صدفة': 20000,
+  'كارني': 1500,
+  'ديتو': 7000,
+  'غوغو شات': 500,
+  'فالا': 170000,
+  'جالا ستار': 3000
+};
+
 import { formatPrice, getCurrency } from "../lib/currency";
 
 export default function SoulShell() {
@@ -135,6 +203,8 @@ export default function SoulShell() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedAlertService, setSelectedAlertService] = useState<{ key: string; category: string; currentPrice: number } | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -144,8 +214,12 @@ export default function SoulShell() {
   }, []);
 
   useEffect(() => {
-    // Set initial quantities
-    setQuantities(apps.reduce((acc, _, idx) => ({ ...acc, [idx]: 1000 }), {}));
+    // Set initial quantities using products' min limits if defined, else fallback to standard diamonds
+    const initialQuantities = apps.reduce((acc, app, idx) => {
+      const minLimit = MIN_LIMITS[app.name] || app.diamonds || 1000;
+      return { ...acc, [idx]: minLimit };
+    }, {});
+    setQuantities(initialQuantities);
 
     trackSectionVisit("تطبيقات الدردشة (SoulShell)");
     const handleCurrencyChange = () => setCurrency(getCurrency());
@@ -167,7 +241,13 @@ export default function SoulShell() {
   }, []);
 
   const getDocPrice = (app: any) => {
-    return customPrices[app.name] !== undefined ? customPrices[app.name] : app.price;
+    if (customPrices[app.name] !== undefined) {
+      return customPrices[app.name];
+    }
+    if (app.diamonds === 10000) {
+      return 1.075;
+    }
+    return app.price;
   };
 
   const toggleCurrency = () => {
@@ -192,6 +272,11 @@ export default function SoulShell() {
       return;
     }
     const qty = quantities[index] || app.diamonds;
+    const minLimit = MIN_LIMITS[app.name] || 0;
+    if (qty < minLimit) {
+      alert(`عذراً، الحد الأدنى للشحن لهذا المنتج (${app.name}) هو ${minLimit} قطعة.`);
+      return;
+    }
     const activePrice = getDocPrice(app);
     const price = ((activePrice / app.diamonds) * qty).toFixed(2);
     setSelectedApp({ ...app, qty, price });
@@ -215,7 +300,7 @@ export default function SoulShell() {
             <ArrowRight size={20} />
             عودة
           </button>
-          <h1 className="text-3xl md:text-5xl font-bold gradient-text">سول شيل</h1>
+          <h1 className="text-3xl md:text-5xl font-bold gradient-text">تطبيقات الدردشة</h1>
           <div className="flex gap-4 items-center">
             <button 
               onClick={toggleCurrency}
@@ -275,13 +360,28 @@ export default function SoulShell() {
                   {app.icon}
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{app.name}</h3>
-                <p className="text-white/60 text-sm mb-4">
-                  {isLoggedIn ? (
-                    `${app.diamonds} قطعة - ${formatPrice(activePrice, currency)}`
-                  ) : (
-                    "🔒 سجل الدخول لرؤية السعر"
+                <div className="flex justify-center items-center gap-2 text-white/60 text-sm mb-4">
+                  <span>
+                    {isLoggedIn ? `${app.diamonds} قطعة - ${formatPrice(activePrice, currency)}` : "🔒 سجل الدخول لرؤية السعر"}
+                  </span>
+                  {isLoggedIn && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAlertService({
+                          key: app.name,
+                          category: 'chat',
+                          currentPrice: activePrice
+                        });
+                        setIsAlertModalOpen(true);
+                      }}
+                      className="p-1 bg-white/5 hover:bg-amber-500/10 text-white/50 hover:text-amber-400 border border-white/10 hover:border-amber-500/20 rounded-md transition-all"
+                      title="مراقبة الأسعار"
+                    >
+                      <Bell size={12} />
+                    </button>
                   )}
-                </p>
+                </div>
 
                 <div className="mb-6">
                   <label className="block text-white/70 text-sm mb-2">الكمية المطلوبة:</label>
@@ -289,8 +389,13 @@ export default function SoulShell() {
                     type="number" 
                     value={qty}
                     onChange={(e) => setQuantities({ ...quantities, [originalIndex]: Number(e.target.value) })}
-                    className="w-full bg-black/20 text-white border border-white/10 rounded-xl px-4 py-2 text-center focus:outline-none focus:border-blue-400"
+                    className={`w-full bg-black/20 text-white border ${qty < (MIN_LIMITS[app.name] || 0) ? 'border-red-500 ring-2 ring-red-500/20' : 'border-white/10'} rounded-xl px-4 py-2 text-center focus:outline-none focus:border-blue-400`}
                   />
+                  {qty < (MIN_LIMITS[app.name] || 0) && (
+                    <p className="text-red-400 text-[11px] font-sans mt-2 font-bold leading-relaxed">
+                      ⚠️ الحد الأدنى للطلب هو {MIN_LIMITS[app.name]} قطعة
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center mb-6 px-4">
@@ -301,8 +406,12 @@ export default function SoulShell() {
                 </div>
 
                 <button 
-                  onClick={() => handleChargeClick(app, originalIndex)}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (qty < (MIN_LIMITS[app.name] || 0)) return;
+                    handleChargeClick(app, originalIndex);
+                  }}
+                  disabled={qty < (MIN_LIMITS[app.name] || 0)}
+                  className={`w-full ${qty < (MIN_LIMITS[app.name] || 0) ? 'bg-gray-600/30 text-white/40 cursor-not-allowed border border-red-500/10' : 'bg-blue-500 hover:bg-blue-600 text-white'} py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2`}
                 >
                   <CheckCircle size={18} />
                   شحن الآن
@@ -321,6 +430,19 @@ export default function SoulShell() {
           onConfirm={confirmOrder}
           serviceName={selectedApp.name}
           amount={selectedApp.price}
+        />
+      )}
+
+      {selectedAlertService && (
+        <PriceAlertModal
+          isOpen={isAlertModalOpen}
+          onClose={() => {
+            setIsAlertModalOpen(false);
+            setSelectedAlertService(null);
+          }}
+          serviceKey={selectedAlertService.key}
+          category={selectedAlertService.category}
+          currentPrice={selectedAlertService.currentPrice}
         />
       )}
 

@@ -9,7 +9,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore with multi-tab persistent cache enabled to guarantee real-time synchronization
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+}, firebaseConfig.firestoreDatabaseId);
 
 // Initialize Auth
 export const auth = getAuth(app);

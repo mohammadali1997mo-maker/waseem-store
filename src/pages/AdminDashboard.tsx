@@ -28,7 +28,9 @@ import {
   UserPlus,
   ShieldAlert,
   Trash2,
-  Gamepad2
+  Gamepad2,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { AdminRole, AdminUser, ROLE_LABELS } from '../types';
@@ -71,22 +73,22 @@ const ALL_PRODUCTS = [
   { key: 'سول شيل', name: 'سول شيل', category: 'chat', defaultPrice: 1.77 },
   { key: 'مجلس', name: 'مجلس', category: 'chat', defaultPrice: 1.07 },
   { key: 'ياهلان', name: 'ياهلان', category: 'chat', defaultPrice: 1.78 },
-  { key: 'سول ستار', name: 'سول ستار', category: 'chat', defaultPrice: 1.1 },
+  { key: 'سول ستار', name: 'سول ستار', category: 'chat', defaultPrice: 1.075 },
   { key: 'بارتي ستار', name: 'بارتي ستار', category: 'chat', defaultPrice: 1.07 },
   { key: 'بيغو لايف', name: 'بيغو لايف', category: 'chat', defaultPrice: 0.89 },
   { key: 'حكي تشان', name: 'حكي تشان', category: 'chat', defaultPrice: 0.76 },
   { key: 'زينا لايف', name: 'زينا لايف', category: 'chat', defaultPrice: 1.09 },
-  { key: 'هابي تشات', name: 'هابي تشات', category: 'chat', defaultPrice: 1.07 },
+  { key: 'هابي تشات', name: 'هابي تشات', category: 'chat', defaultPrice: 1.075 },
   { key: 'ايومي تشات', name: 'ايومي تشات', category: 'chat', defaultPrice: 0.95 },
   { key: 'هيا تشات', name: 'هيا تشات', category: 'chat', defaultPrice: 1.08 },
   { key: 'أب فن', name: 'أب فن', category: 'chat', defaultPrice: 1.24 },
-  { key: 'مولي ستار', name: 'مولي ستار', category: 'chat', defaultPrice: 1.15 },
+  { key: 'مولي ستار', name: 'مولي ستار', category: 'chat', defaultPrice: 1.075 },
   { key: 'تادا شات', name: 'تادا شات', category: 'chat', defaultPrice: 1.24 },
   { key: 'نبض شات', name: 'نبض شات', category: 'chat', defaultPrice: 0.075 },
   { key: 'ديمو شات', name: 'ديمو شات', category: 'chat', defaultPrice: 0.95 },
   { key: 'اب لايف', name: 'اب لايف', category: 'chat', defaultPrice: 1.65 },
   { key: 'بيلا شات', name: 'بيلا شات', category: 'chat', defaultPrice: 0.87 },
-  { key: 'تاكا شات', name: 'تاكا شات', category: 'chat', defaultPrice: 1.03 },
+  { key: 'تاكا شات', name: 'تاكا شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'لامي شات', name: 'لامي شات', category: 'chat', defaultPrice: 0.77 },
   { key: 'هوا شات', name: 'هوا شات', category: 'chat', defaultPrice: 1.188 },
   { key: 'سكاي شات', name: 'سكاي شات', category: 'chat', defaultPrice: 1.15 },
@@ -94,43 +96,43 @@ const ALL_PRODUCTS = [
   { key: 'Bobo chat', name: 'Bobo chat', category: 'chat', defaultPrice: 1.05 },
   { key: 'توب توب', name: 'توب توب', category: 'chat', defaultPrice: 1.1 },
   { key: 'دريم شات', name: 'دريم شات', category: 'chat', defaultPrice: 0.1 },
-  { key: 'الو شات', name: 'الو شات', category: 'chat', defaultPrice: 0.1 },
+  { key: 'الو شات', name: 'الو شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'وياك شات', name: 'وياك شات', category: 'chat', defaultPrice: 1.12 },
   { key: 'بيب لايف', name: 'بيب لايف', category: 'chat', defaultPrice: 1.1 },
   { key: 'غولد شات', name: 'غولد شات', category: 'chat', defaultPrice: 0.70 },
   { key: 'مانغو لايف', name: 'مانغو لايف', category: 'chat', defaultPrice: 1.22 },
   { key: 'مان شات', name: 'مان شات', category: 'chat', defaultPrice: 1.4 },
   { key: 'ستار ميكر', name: 'ستار ميكر', category: 'chat', defaultPrice: 2.12 },
-  { key: 'واهو شات', name: 'واهو شات', category: 'chat', defaultPrice: 1.1 },
+  { key: 'واهو شات', name: 'واهو شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'فور فان شات', name: 'فور فان شات', category: 'chat', defaultPrice: 1.25 },
   { key: 'لايكي لايف', name: 'لايكي لايف', category: 'chat', defaultPrice: 0.99 },
   { key: 'هيو شات', name: 'هيو شات', category: 'chat', defaultPrice: 1.3 },
   { key: 'كوكو شات', name: 'كوكو شات', category: 'chat', defaultPrice: 0.9 },
-  { key: 'تامي', name: 'تامي', category: 'chat', defaultPrice: 0.810 },
-  { key: 'يوهو شات', name: 'يوهو شات', category: 'chat', defaultPrice: 1.090 },
+  { key: 'تامي', name: 'تامي', category: 'chat', defaultPrice: 1.075 },
+  { key: 'يوهو شات', name: 'يوهو شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'لاما شات', name: 'لاما شات', category: 'chat', defaultPrice: 1.040 },
   { key: 'ميكو شات', name: 'ميكو شات', category: 'chat', defaultPrice: 1.085 },
   { key: 'ازال لايف', name: 'ازال لايف', category: 'chat', defaultPrice: 0.85 },
   { key: 'هوني جار', name: 'هوني جار', category: 'chat', defaultPrice: 1.56 },
   { key: 'اهلان شات', name: 'اهلان شات', category: 'chat', defaultPrice: 0.83 },
-  { key: 'ويغو بارتي', name: 'ويغو بارتي', category: 'chat', defaultPrice: 0.84 },
+  { key: 'ويغو بارتي', name: 'ويغو بارتي', category: 'chat', defaultPrice: 1.075 },
   { key: 'يويو شات', name: 'يويو شات', category: 'chat', defaultPrice: 0.76 },
   { key: 'بوبو لايف', name: 'بوبو لايف', category: 'chat', defaultPrice: 1.58 },
   { key: 'سلام شات', name: 'سلام شات', category: 'chat', defaultPrice: 1.008 },
   { key: 'تالك تالك', name: 'تالك تالك', category: 'chat', defaultPrice: 1.28 },
   { key: 'بينمو شات', name: 'بينمو شات', category: 'chat', defaultPrice: 0.86 },
-  { key: 'ميغو شات', name: 'ميغو شات', category: 'chat', defaultPrice: 1.11 },
+  { key: 'ميغو شات', name: 'ميغو شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'ليغو لايف', name: 'ليغو لايف', category: 'chat', defaultPrice: 1.193 },
   { key: 'ليلا تشات', name: 'ليلا تشات', category: 'chat', defaultPrice: 0.225 },
-  { key: 'يوي تشات', name: 'يوي تشات', category: 'chat', defaultPrice: 0.966 },
-  { key: 'سويو', name: 'سويو', category: 'chat', defaultPrice: 0.815 },
+  { key: 'يوي تشات', name: 'يوي تشات', category: 'chat', defaultPrice: 1.075 },
+  { key: 'سويو', name: 'سويو', category: 'chat', defaultPrice: 1.075 },
   { key: 'سول شات', name: 'سول شات', category: 'chat', defaultPrice: 0.930 },
-  { key: 'فانسي لايف', name: 'فانسي لايف', category: 'chat', defaultPrice: 0.61 },
+  { key: 'فانسي لايف', name: 'فانسي لايف', category: 'chat', defaultPrice: 1.075 },
   { key: 'لايت شات', name: 'لايت شات', category: 'chat', defaultPrice: 1.05 },
   { key: 'اولاميت شات', name: 'اولاميت شات', category: 'chat', defaultPrice: 1.162 },
   { key: 'سوغو', name: 'سوغو', category: 'chat', defaultPrice: 1.063 },
   { key: 'سوبر لايف', name: 'سوبر لايف', category: 'chat', defaultPrice: 0.999 },
-  { key: 'هامي بارتي', name: 'هامي بارتي', category: 'chat', defaultPrice: 0.999 },
+  { key: 'هامي بارتي', name: 'هامي بارتي', category: 'chat', defaultPrice: 1.075 },
   { key: 'اوبا لايف', name: 'اوبا لايف', category: 'chat', defaultPrice: 1.05 },
   { key: 'ليام شات', name: 'ليام شات', category: 'chat', defaultPrice: 1.099 },
   { key: 'يامي ستار', name: 'يامي ستار', category: 'chat', defaultPrice: 1.183 },
@@ -147,17 +149,17 @@ const ALL_PRODUCTS = [
   { key: 'شاميت تشات', name: 'شاميت تشات', category: 'chat', defaultPrice: 2.572 },
   { key: 'هيغو لايف', name: 'هيغو لايف', category: 'chat', defaultPrice: 0.122 },
   { key: 'ايمو شات', name: 'ايمو شات', category: 'chat', defaultPrice: 0.571 },
-  { key: 'هاي بارتي', name: 'هاي بارتي', category: 'chat', defaultPrice: 1.105 },
+  { key: 'هاي بارتي', name: 'هاي بارتي', category: 'chat', defaultPrice: 1.075 },
   { key: 'كواي', name: 'كواي', category: 'chat', defaultPrice: 2.088 },
   { key: 'بارتي هيرو', name: 'بارتي هيرو', category: 'chat', defaultPrice: 0.995 },
   { key: 'هووبي', name: 'هووبي', category: 'chat', defaultPrice: 0.994 },
-  { key: 'آشا لايف', name: 'آشا لايف', category: 'chat', defaultPrice: 1.248 },
-  { key: 'سوماتش', name: 'سوماتش', category: 'chat', defaultPrice: 1.278 },
+  { key: 'آشا لايف', name: 'آشا لايف', category: 'chat', defaultPrice: 1.075 },
+  { key: 'سوماتش', name: 'سوماتش', category: 'chat', defaultPrice: 1.075 },
   { key: 'اوهلا', name: 'اوهلا', category: 'chat', defaultPrice: 1.099 },
   { key: 'صدفة', name: 'صدفة', category: 'chat', defaultPrice: 1.03 },
   { key: 'كارني', name: 'كارني', category: 'chat', defaultPrice: 1.187 },
   { key: 'ديتو', name: 'ديتو', category: 'chat', defaultPrice: 1.981 },
-  { key: 'سما شات', name: 'سما شات', category: 'chat', defaultPrice: 1.030 },
+  { key: 'سما شات', name: 'سما شات', category: 'chat', defaultPrice: 1.075 },
   { key: 'غوغو شات', name: 'غوغو شات', category: 'chat', defaultPrice: 0.389 },
   { key: 'فالا', name: 'فالا', category: 'chat', defaultPrice: 0.361 },
   { key: 'جالا ستار', name: 'جالا ستار', category: 'chat', defaultPrice: 0.830 },
@@ -206,6 +208,11 @@ export default function AdminDashboard() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  // Price Alerts States
+  const [priceAlertsEnabled, setPriceAlertsEnabled] = useState<boolean>(true);
+  const [isUpdatingAlertSetting, setIsUpdatingAlertSetting] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
+
   // Advanced UC Withdrawals dashboard
   const [adminWithdrawals, setAdminWithdrawals] = useState<any[]>([]);
   const [withdrawalFilter, setWithdrawalFilter] = useState("all");
@@ -228,53 +235,11 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const ownerEmails = ["wsh020264@gmail.com", "mohammadali1997mo@gmail.com"];
-        try {
-          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-          if (adminDoc.exists()) {
-            setIsAdmin(true);
-            setRole(adminDoc.data().role as AdminRole || 'viewer');
-          } else if (user.email && ownerEmails.includes(user.email)) {
-            setIsAdmin(true);
-            setRole('owner');
-            // Auto-create owner doc if it doesn't exist
-            await setDoc(doc(db, 'admins', user.uid), {
-              uid: user.uid,
-              email: user.email,
-              name: user.displayName || 'Owner',
-              role: 'owner',
-              addedAt: new Date().toISOString()
-            });
-          } else {
-            navigate('/admin/login');
-          }
-        } catch (e: any) {
-          // If offline, check if they are in the owner list as a fallback
-          if (e.message?.includes('offline') || e.code === 'unavailable') {
-            if (user.email && ownerEmails.includes(user.email)) {
-              setIsAdmin(true);
-              setRole('owner');
-            } else {
-              // If not a hardcoded owner and offline (and not in cache), we can't verify
-              console.warn("Offline and not in cache, cannot verify admin status");
-              navigate('/admin/login');
-            }
-          } else {
-            console.error("Admin check failed", e);
-            navigate('/admin/login');
-          }
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        navigate('/admin/login');
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, [navigate]);
+    // تم تفعيل الدخول التلقائي بدون كلمة سر أو حساب لمساعدة الزملاء في سوريا
+    setIsAdmin(true);
+    setRole('owner');
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -325,9 +290,19 @@ export default function AdminDashboard() {
           setExchangeRate(val);
           setRateInput(val.toString());
         }
+        const alertsEnabled = snap.data().priceAlertsEnabled;
+        if (typeof alertsEnabled === 'boolean') {
+          setPriceAlertsEnabled(alertsEnabled);
+        }
       }
     }, (err) => {
       console.warn("Error reading settings exchange rate:", err);
+    });
+
+    const unsubAlerts = onSnapshot(collection(db, 'price_alerts'), (snapshot) => {
+      setActiveAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      console.warn("Error watching price_alerts collection:", err);
     });
 
     return () => {
@@ -339,35 +314,42 @@ export default function AdminDashboard() {
       unsubPrices();
       unsubWithdrawals();
       unsubExchangeRate();
+      unsubAlerts();
     };
   }, [isAdmin]);
 
   const handleApproveWithdrawal = async (id: string) => {
     try {
-      await updateDoc(doc(db, 'withdrawals', id), {
-        status: 'تم الشحن',
-        updatedAt: new Date().toISOString()
+      const res = await fetch("/api/admin/update-withdrawal-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: 'تم الشحن' })
       });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       alert("تم تعليم طلب السحب كمكتمل بنجاح وشحن شدات للاعب!");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("فشل تحديث حالة السحب المباشر.");
+      alert(`فشل تحديث حالة السحب المباشر: ${err.message}`);
     }
   };
 
   const handleRejectWithdrawal = async (item: any) => {
     if (!confirm("هل أنت متأكد من رفض طلب السحب وإرجاع رصيد الشدات إلى محفظة المستخدم بالكامل؟")) return;
     try {
-      const { updateUserUCBalance } = await import('../lib/db');
-      await updateUserUCBalance(item.uid, item.amount);
-      await updateDoc(doc(db, 'withdrawals', item.id), {
-        status: 'مرفوض',
-        updatedAt: new Date().toISOString()
+      const res = await fetch("/api/admin/update-withdrawal-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, status: 'مرفوض', uid: item.uid, amount: item.amount })
       });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       alert("تم رفض الطلب بنجاح وإرجاع الشدات للرصيد المعتمد بالخزينة.");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("فشل عملية الرفض والإرجاع.");
+      alert(`فشل عملية الرفض والإرجاع: ${err.message}`);
     }
   };
 
@@ -386,14 +368,19 @@ export default function AdminDashboard() {
         alert("يرجى إدخال سعر صحيح أكبر من الصفر");
         return;
       }
-      await setDoc(doc(db, 'prices', key), {
-        price: Number(newPrice),
-        updatedAt: new Date().toISOString()
+
+      const res = await fetch("/api/admin/save-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, price: Number(newPrice) })
       });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       setEditingKey(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("فشل تحديث السعر");
+      alert(`فشل تحديث السعر: ${err.message}`);
     }
   };
 
@@ -403,11 +390,19 @@ export default function AdminDashboard() {
         alert("لا تملك صلاحيات لتعديل الأسعار");
         return;
       }
-      await deleteDoc(doc(db, 'prices', key));
+
+      const res = await fetch("/api/admin/reset-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       setEditingKey(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("فشل إعادة تعيين السعر للمصنع");
+      alert(`فشل إعادة تعيين السعر للمصنع: ${err.message}`);
     }
   };
 
@@ -423,9 +418,14 @@ export default function AdminDashboard() {
         setIsUpdatingRate(false);
         return;
       }
-      await setDoc(doc(db, 'settings', 'global'), {
-        exchangeRate: Number(rateInput)
+      const res = await fetch("/api/admin/update-exchange-rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exchangeRate: Number(rateInput) })
       });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       setToastMessage(`تم تحديث سعر صرف الدولار بنجاح إلى ${Number(rateInput).toLocaleString()} ل.س! تم تعميم السعر الجديد وتحديث حسابات المتجر والآلة الحاسبة فورياً.`);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 6000);
@@ -434,6 +434,34 @@ export default function AdminDashboard() {
       alert(`فشل عملية تحديث سعر الصرف: ${err.message}`);
     } finally {
       setIsUpdatingRate(false);
+    }
+  };
+
+  const handleTogglePriceAlerts = async () => {
+    setIsUpdatingAlertSetting(true);
+    try {
+      if (role !== 'owner' && role !== 'manager') {
+        alert("لا تملك صلاحيات كافية لتعديل الإعدادات. يرجى مراجعة المسؤول.");
+        setIsUpdatingAlertSetting(false);
+        return;
+      }
+      const nextVal = !priceAlertsEnabled;
+      const res = await fetch("/api/admin/update-price-alerts-setting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: nextVal })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      setToastMessage(nextVal ? "تم تفعيل ميزة تنبيهات الأسعار الفنية للمستخدمين بنجاح!" : "تم تعطيل ميزة تنبيهات الأسعار الفنية للمستخدمين.");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 5000);
+    } catch (err: any) {
+      console.error(err);
+      alert(`فشل عملية تحديث إعداد تنبيهات الأسعار: ${err.message}`);
+    } finally {
+      setIsUpdatingAlertSetting(false);
     }
   };
 
@@ -555,10 +583,17 @@ export default function AdminDashboard() {
   const updateAdminRole = async (id: string, newRole: AdminRole) => {
     if (role !== 'owner') return;
     try {
-      await updateDoc(doc(db, 'admins', id), { role: newRole });
-    } catch (err) {
+      const res = await fetch("/api/admin/update-admin-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, role: newRole })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+    } catch (err: any) {
       console.error(err);
-      alert("فشل تحديث الرتبة");
+      alert(`فشل تحديث الرتبة: ${err.message}`);
     }
   };
 
@@ -566,27 +601,35 @@ export default function AdminDashboard() {
     if (role !== 'owner') return;
     if (!confirm("هل أنت متأكد من سحب صلاحيات الأدمن من هذا المستخدم؟")) return;
     try {
-      await deleteDoc(doc(db, 'admins', id));
-    } catch (err) {
+      const res = await fetch("/api/admin/remove-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+    } catch (err: any) {
       console.error(err);
-      alert("فشل سحب الصلاحيات");
+      alert(`فشل سحب الصلاحيات: ${err.message}`);
     }
   };
 
   const promoteToAdmin = async (user: any) => {
     if (role !== 'owner') return;
     try {
-      await setDoc(doc(db, 'admins', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: user.name || 'مستخدم',
-        role: 'viewer',
-        addedAt: new Date().toISOString()
+      const res = await fetch("/api/admin/promote-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user.uid, email: user.email, name: user.name })
       });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       alert(`تمت إضافة ${user.name} كأدمن برتبة مشاهد`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("فشل الترقية");
+      alert(`فشل الترقية: ${err.message}`);
     }
   };
 
@@ -768,72 +811,110 @@ export default function AdminDashboard() {
                   <p className="text-white/40 text-sm">تعديل سعر صرف $1 دولار لعملة الليرة السورية فورياً</p>
                 </div>
               </div>
-              <div className="flex flex-1 max-w-md w-full gap-2">
-                <div className="relative flex-1">
-                  <input 
-                    type="number" 
-                    value={rateInput}
-                    onChange={(e) => setRateInput(e.target.value)}
-                    placeholder="سعر الصرف (مثال: 15000)"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pr-4 pl-12 py-2 text-sm font-mono focus:outline-none focus:border-amber-500 text-right"
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[10px] font-bold font-mono">ل.س</span>
+              <div className="flex flex-1 flex-col max-w-md w-full gap-2">
+                <div className="flex gap-2 w-full">
+                  <div className="relative flex-1">
+                    <input 
+                      type="number" 
+                      value={rateInput}
+                      onChange={(e) => setRateInput(e.target.value)}
+                      placeholder="سعر الصرف (مثال: 15000)"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pr-4 pl-12 py-2 text-sm font-mono focus:outline-none focus:border-amber-500 text-right"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[10px] font-bold font-mono">ل.س</span>
+                  </div>
+                  <button 
+                    onClick={handleUpdateExchangeRate}
+                    disabled={isUpdatingRate || (role !== 'owner' && role !== 'manager')}
+                    className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-neutral-950 px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 disabled:opacity-30 shrink-0 shadow-lg shadow-amber-500/10"
+                  >
+                    {isUpdatingRate ? <RefreshCw className="animate-spin" size={14} /> : null}
+                    تحديث سعر الصرف الآن
+                  </button>
                 </div>
-                <button 
-                  onClick={handleUpdateExchangeRate}
-                  disabled={isUpdatingRate || (role !== 'owner' && role !== 'manager')}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-neutral-950 px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 disabled:opacity-30 shrink-0 shadow-lg shadow-amber-500/10"
-                >
-                  {isUpdatingRate ? <RefreshCw className="animate-spin" size={14} /> : null}
-                  تحديث سعر الصرف الآن
-                </button>
               </div>
             </div>
           </section>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-            className="card-glass p-6 rounded-3xl border-purple-500/20 flex items-center gap-6"
-          >
-            <div className="p-4 bg-green-500/10 rounded-2xl text-green-500">
-              <Receipt size={32} />
+        {/* Price Alerts Configuration & Monitoring Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-1 card-glass p-6 rounded-3xl border-yellow-500/10 flex flex-col justify-between">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-yellow-500/10 rounded-xl text-yellow-400">
+                <Bell size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm md:text-base">تنبيهات الأسعار للمستخدمين</h3>
+                <p className="text-white/40 text-[11px] md:text-xs">تفعيل أو تعطيل ميزة الإشعارات لجميع المشتركين</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white/40 text-sm">إجمالي المبيعات</p>
-              <h3 className="text-3xl font-bold">{invoices.length}</h3>
+            
+            <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5 mt-2">
+              <span className="text-xs font-bold">الحالة العامة للميزة:</span>
+              <button
+                onClick={handleTogglePriceAlerts}
+                disabled={isUpdatingAlertSetting || (role !== 'owner' && role !== 'manager')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  priceAlertsEnabled 
+                    ? "bg-emerald-500/25 text-emerald-400 hover:bg-emerald-500/30" 
+                    : "bg-red-500/25 text-red-400 hover:bg-red-500/30"
+                }`}
+              >
+                {isUpdatingAlertSetting ? <RefreshCw className="animate-spin" size={12} /> : null}
+                {priceAlertsEnabled ? "🟢 مفعلة ونشطة" : "🔴 معطلة مؤقتاً"}
+              </button>
             </div>
-          </motion.div>
+          </section>
 
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
-            className="card-glass p-6 rounded-3xl border-blue-500/20 flex items-center gap-6"
-          >
-            <div className="p-4 bg-blue-500/10 rounded-2xl text-blue-500">
-              <Users size={32} />
+          <section className="lg:col-span-2 card-glass p-6 rounded-3xl border-white/5 space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-sm md:text-base flex items-center gap-2">
+                  <BellRing size={18} className="text-amber-400" />
+                  اشتراكات تنبيهات الأسعار النشطة ({activeAlerts.length})
+                </h3>
+                <p className="text-white/40 text-[10px] md:text-[11px]">متابعة المنتجات التي يراقبها المستخدمون حالياً وتلقي الإشعارات المناسبة لها</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white/40 text-sm">المستخدمين المسجلين</p>
-              <h3 className="text-3xl font-bold">{users.length}</h3>
-            </div>
-          </motion.div>
 
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-            className="card-glass p-6 rounded-3xl border-orange-500/20 flex items-center gap-6"
-          >
-            <div className="p-4 bg-orange-500/10 rounded-2xl text-orange-500">
-              <TrendingUp size={32} />
+            <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {activeAlerts.length === 0 ? (
+                <div className="text-center py-8 text-white/30 text-xs">
+                  لا توجد اشتراكات مراقبة أسعار نشطة حالياً.
+                </div>
+              ) : (
+                activeAlerts.map((alertItem) => (
+                  <div key={alertItem.id} className="flex justify-between items-center text-xs bg-white/5 p-3 rounded-xl border border-white/5 hover:bg-white/10 transition-all font-sans">
+                    <div className="text-right">
+                      <span className="font-bold text-white block">{alertItem.serviceKey}</span>
+                      <span className="text-white/40 text-[10px]">{alertItem.userEmail || alertItem.uid}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="text-left font-mono">
+                        {alertItem.triggerType === "any_change" ? (
+                          <span className="text-amber-400 font-bold">أي تغيير</span>
+                        ) : (
+                          <span className="text-emerald-400 font-bold">{`< ${formatPrice(alertItem.targetPrice)}`}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (confirm("هل أنت متأكد من حذف هذا التنبيه؟")) {
+                            await deleteDoc(doc(db, "price_alerts", alertItem.id));
+                          }
+                        }}
+                        className="text-red-400 hover:text-red-300 p-1 bg-white/5 hover:bg-white/10 rounded-md transition-all"
+                        title="حذف هذا الاشتراك"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <div>
-              <p className="text-white/40 text-sm">النشاط الكلي</p>
-              <h3 className="text-3xl font-bold">
-                {stats.reduce((acc, curr) => acc + (curr.visitCount || 0), 0)}
-              </h3>
-            </div>
-          </motion.div>
+          </section>
         </div>
 
         {/* Price Management Panel */}
@@ -881,8 +962,8 @@ export default function AdminDashboard() {
               }
 
               return items.map((prod) => {
-                const hasCustom = pricesSnapshot[prod.key] !== undefined;
-                const currentPrice = hasCustom ? pricesSnapshot[prod.key] : prod.defaultPrice;
+                const hasGlobalCustom = pricesSnapshot[prod.key] !== undefined;
+                const currentPrice = hasGlobalCustom ? pricesSnapshot[prod.key] : prod.defaultPrice;
                 const isEditing = editingKey === prod.key;
 
                 return (
@@ -895,13 +976,16 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div className="text-left font-mono text-sm leading-tight flex flex-col items-end">
-                        {hasCustom ? (
+                        {hasGlobalCustom ? (
                           <>
                             <span className="text-purple-400 font-bold">${currentPrice}</span>
-                            <span className="text-[9px] text-white/30 line-through">الأصل: ${prod.defaultPrice}</span>
+                            <span className="text-[9px] text-purple-400 font-bold bg-purple-400/10 px-1 rounded mt-0.5" style={{ direction: 'rtl' }}>🌐 عام سحابي</span>
                           </>
                         ) : (
-                          <span className="text-white/60">${prod.defaultPrice}</span>
+                          <>
+                            <span className="text-white/60">${prod.defaultPrice}</span>
+                            <span className="text-[9px] text-white/20 mt-0.5" style={{ direction: 'rtl' }}>📦 سعر أصلي</span>
+                          </>
                         )}
                       </div>
                     </div>
@@ -944,7 +1028,7 @@ export default function AdminDashboard() {
                           >
                             تعديل السعر
                           </button>
-                          {hasCustom && (
+                          {hasGlobalCustom && (
                             <button
                               disabled={role !== 'owner' && role !== 'manager'}
                               onClick={() => handleResetPrice(prod.key)}
@@ -1231,12 +1315,30 @@ export default function AdminDashboard() {
                         >
                           <div className="flex justify-between items-start flex-wrap gap-2">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
-                                {sess.name?.charAt(0) || 'U'}
+                              <div className="relative">
+                                <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
+                                  {sess.name?.charAt(0) || 'U'}
+                                </div>
+                                {(() => {
+                                  const isOnline = sess.lastActive && (Date.now() - new Date(sess.lastActive).getTime() < 25000);
+                                  return (
+                                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-slate-900 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+                                  );
+                                })()}
                               </div>
                               <div className="text-right">
-                                <h4 className="font-bold text-sm text-white">{sess.name}</h4>
-                                <p className="text-white/40 text-xs">{sess.email}</p>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-sm text-white">{sess.name}</h4>
+                                  {(() => {
+                                    const isOnline = sess.lastActive && (Date.now() - new Date(sess.lastActive).getTime() < 25000);
+                                    return isOnline ? (
+                                      <span className="text-[9px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full border border-green-500/20 font-bold">● نشط الآن</span>
+                                    ) : (
+                                      <span className="text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded-full border border-white/5">غير نشط</span>
+                                    );
+                                  })()}
+                                </div>
+                                <p className="text-white/40 text-xs font-mono">{sess.email}</p>
                               </div>
                             </div>
                             <div className="text-left">

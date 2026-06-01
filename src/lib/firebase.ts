@@ -13,7 +13,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore with robust local persistent cache
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+}, firebaseConfig.firestoreDatabaseId);
 
 // Initialize Auth
 export const auth = getAuth(app);

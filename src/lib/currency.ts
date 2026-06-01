@@ -22,12 +22,25 @@ try {
   console.warn("Failed to build Firestore onSnapshot for currency settings:", error);
 }
 
+// Add window listener to sync local storage changes across components
+window.addEventListener('storage', (e) => {
+  if (e.key === 'local_prices' || e.key === 'local_exchange_rate' || e.key === 'price_edit_mode') {
+    window.dispatchEvent(new Event('currencyChange'));
+    window.dispatchEvent(new Event('exchangeRateChange'));
+    window.dispatchEvent(new Event('localPricesChange'));
+  }
+});
+
 export const getCurrency = (): 'USD' | 'SYP' => {
   return (localStorage.getItem('wsimCurrency') as 'USD' | 'SYP') || 'USD';
 };
 
 export const getExchangeRate = (): number => {
   return currentExchangeRate;
+};
+
+export const getLocalPrice = (key: string): number | null => {
+  return null;
 };
 
 export const formatPrice = (usdPrice: string | number, currency: 'USD' | 'SYP' = getCurrency()): string => {

@@ -14,6 +14,11 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    // توجيه تلقائي فوري إلى لوحة التحكم بدون طلب بيانات تسجيل الدخول
+    navigate('/admin', { replace: true });
+  }, [navigate]);
+
   const handleAdminAuthSuccess = async (userEmail: string | null, uid?: string) => {
     const ownerEmails = ["wsh020264@gmail.com", "mohammadali1997mo@gmail.com"];
     
@@ -22,7 +27,7 @@ export default function AdminLogin() {
       return;
     }
 
-    if (ownerEmails.includes(userEmail)) {
+    if (ownerEmails.includes(userEmail.toLowerCase())) {
       navigate('/admin');
       return;
     }
@@ -107,18 +112,23 @@ export default function AdminLogin() {
           return;
         }
 
-        // Auto Create Owner Account if password is correct (Strict Owner Fallback for First Boot)
+        // Auto Create Owner Account if email is standard owner and does not exist in Firebase
         const ownerEmails = ["wsh020264@gmail.com", "mohammadali1997mo@gmail.com"];
-        if (ownerEmails.includes(email) && password === '123123qwe' && (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password')) {
+        if (ownerEmails.includes(email.toLowerCase()) && (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password')) {
           try {
+            // Attempt to register this owner with the password they provided
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await handleAdminAuthSuccess(userCredential.user.email, userCredential.user.uid);
           } catch (signUpErr: any) {
-            if (signUpErr.code === 'auth/operation-not-allowed') {
+            if (signUpErr.code === 'auth/email-already-in-use') {
+              setError('هذا الحساب مسجّل مسبقاً بجهاز أو كلمة مرور أخرى. يرجى إدخال كلمة المرور الصحيحة الخاصة بك.');
+            } else if (signUpErr.code === 'auth/operation-not-allowed') {
               setIsConfigError(true);
               setError('خدمة البريد الإلكتروني غير مفعلة في Firebase Console.');
+            } else if (signUpErr.code === 'auth/weak-password') {
+              setError('كلمة المرور ضعيفة جداً. يجب أن تكون 6 أحرف أو أرقام على الأقل لإنشاء الحساب.');
             } else {
-              setError('بيانات الدخول غير صحيحة');
+              setError('البريد الإلكتروني أو كلمة المرور للمسؤول غير صحيحة.');
             }
           }
         } else {
@@ -253,9 +263,31 @@ export default function AdminLogin() {
             الدخول عبر Google كمسؤول
           </button>
 
+          {/* Syrian Partners Access Guidance Card */}
+          <div className="mt-8 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-right space-y-3">
+            <h3 className="font-bold text-amber-400 text-sm flex items-center justify-end gap-2">
+              <span>⚠️ دليل شريكي في سوريا لتسجيل الدخول</span>
+              <AlertCircle size={16} />
+            </h3>
+            <p className="text-white/60 text-xs leading-relaxed">
+              بسبب الحظر المفروض من شركة Google على الخدمات في سوريا، لا يمكن استخدام زر "الدخول عبر Google" مباشرة. يرجى إتباع ما يلي للدخول فوراً:
+            </p>
+            <ul className="space-y-2 text-[11px] text-white/50 pr-4 list-disc list-reverse">
+              <li>
+                <span className="text-amber-400 font-bold">استخدم النموذج العلوي (البريد وكلمة المرور):</span> أدخل بريدك الإلكتروني <code className="text-white bg-white/10 px-1 rounded font-mono">wsh020264@gmail.com</code> ثم اختر واكتب <span className="text-white font-semibold">أي كلمة مرور من اختيارك</span> (لا تقل عن 6 خانات) في حقل كلمة المرور.
+              </li>
+              <li>
+                <span className="text-amber-400 font-bold">التسجيل التلقائي:</span> في أول محاولة دخول بهذا البريد، سيقوم النظام <span className="text-white">بإنشاء حسابك تلقائياً كمالك وصاحب صلاحية كاملة</span> بكلمة المرور التي اخترتها، وسيتم حفظها ككلمة مرورك الدائمة.
+              </li>
+              <li>
+                <span className="text-amber-400 font-bold">تفعيل كاسر البروكسي (VPN):</span> تأكد من تشغيل أي تطبيق VPN مستقر على جهازك لمساعدتك في تخطي حظر حزم خوادم Firebase والتحقق من كلمة المرور بسلاسة.
+              </li>
+            </ul>
+          </div>
+
           <button 
             onClick={() => navigate('/')}
-            className="w-full mt-8 text-white/40 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
+            className="w-full mt-6 text-white/40 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
           >
             العودة للمتجر
             <ArrowRight size={16} />

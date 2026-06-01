@@ -3,6 +3,7 @@
   "appId": "1:445627866589:web:5b79bbeca5efb6244a2a34",
   "apiKey": "AIzaSyBu0xJlDmsS4stVUrQKnHgzccUtCrrgWSE",
   "authDomain": "golden-axe-d07pf.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-0bab3806-0221-4112-9bea-34b5b048b014",
   "storageBucket": "golden-axe-d07pf.firebasestorage.app",
   "messagingSenderId": "445627866589",
   "measurementId": ""

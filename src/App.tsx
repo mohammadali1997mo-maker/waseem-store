@@ -31,28 +31,25 @@ function SessionTracker() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      let pathName = "";
-      if (location.pathname === "/") pathName = "الصفحة الرئيسية";
-      else if (location.pathname === "/games") pathName = "شحن الألعاب";
-      else if (location.pathname === "/soul-shell") pathName = "شحن سول شيل";
-      else if (location.pathname === "/social-services") pathName = "تمويل سوشيال ميديا";
-      else if (location.pathname === "/payment") pathName = "صفحة دفع الفواتير";
-      else if (location.pathname === "/profile") pathName = "حسابي الشخصي";
-      else if (location.pathname === "/admin") pathName = "لوحة التحكم للمسؤول";
-      else if (location.pathname === "/login") pathName = "صفحة تسجيل الدخول";
+    let pathName = "";
+    if (location.pathname === "/") pathName = "الصفحة الرئيسية";
+    else if (location.pathname === "/games") pathName = "شحن الألعاب";
+    else if (location.pathname === "/soul-shell") pathName = "شحن سول شيل";
+    else if (location.pathname === "/social-services") pathName = "تمويل سوشيال ميديا";
+    else if (location.pathname === "/payment") pathName = "صفحة دفع الفواتير";
+    else if (location.pathname === "/profile") pathName = "حسابي الشخصي";
+    else if (location.pathname === "/admin") pathName = "لوحة التحكم للمسؤول";
+    else if (location.pathname === "/login") pathName = "صفحة تسجيل الدخول";
 
-      if (pathName) {
-        trackUserSession(user, pathName);
-      }
+    if (pathName) {
+      trackUserSession(user, pathName);
     }
   }, [location.pathname, user]);
 
   useEffect(() => {
-    if (!user) return;
     const interval = setInterval(() => {
       trackUserSession(user);
-    }, 10000);
+    }, 10005);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -93,7 +90,7 @@ function OfflineBanner() {
 export default function App() {
   return (
     <Router>
-      <div dir="rtl" className="font-sans">
+      <div dir="rtl" className="font-sans min-h-screen w-full overflow-x-hidden">
         <OfflineBanner />
         <SessionTracker />
         <Routes>

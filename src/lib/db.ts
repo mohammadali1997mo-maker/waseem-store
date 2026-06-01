@@ -214,7 +214,6 @@ export function getOrCreateSessionId(): string {
 }
 
 export async function trackUserSession(user: any, sectionName?: string) {
-  if (!user) return;
   try {
     const sid = getOrCreateSessionId();
     const sessionRef = doc(db, 'visitor_sessions', sid);
@@ -236,20 +235,20 @@ export async function trackUserSession(user: any, sectionName?: string) {
       }
     }
 
-    const email = user.email || 'google-user@wsimstore.com';
-    const name = user.displayName || user.email?.split('@')[0] || 'مستخدم';
+    const email = user ? (user.email || 'google-user@wsimstore.com') : 'guest-visitor@wsimstore.com';
+    const name = user ? (user.displayName || user.email?.split('@')[0] || 'مستخدم مسجل') : 'زائر متصفح';
     const now = new Date();
     
     if (!sessionSnap || !sessionSnap.exists()) {
       await setDoc(sessionRef, {
         sessionId: sid,
-        uid: user.uid,
+        uid: user ? user.uid : 'guest-' + sid,
         email,
         name,
         startedAt: now.toISOString(),
         lastActive: now.toISOString(),
         durationSeconds: 0,
-        visitorType: user.email === 'wsh020264@gmail.com' ? 'admin' : 'user',
+        visitorType: user ? (['wsh020264@gmail.com', 'mohammadali1997mo@gmail.com'].includes(user.email?.toLowerCase()) ? 'admin' : 'user') : 'guest',
         sections: sectionName ? [sectionName] : [],
         pathHistory: sectionName ? [{ name: sectionName, visitedAt: now.toISOString() }] : [],
       });
@@ -262,6 +261,14 @@ export async function trackUserSession(user: any, sectionName?: string) {
         lastActive: now.toISOString(),
         durationSeconds: diffSeconds,
       };
+
+      // Promote guest session to registered user once they log in
+      if (user && (!data.uid || data.uid.startsWith('guest-'))) {
+        updates.uid = user.uid;
+        updates.email = email;
+        updates.name = name;
+        updates.visitorType = ['wsh020264@gmail.com', 'mohammadali1997mo@gmail.com'].includes(user.email?.toLowerCase()) ? 'admin' : 'user';
+      }
 
       if (sectionName) {
         updates.sections = arrayUnion(sectionName);

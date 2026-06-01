@@ -1,8 +1,9 @@
-import { ArrowRight, Search, Gamepad, ShoppingCart } from "lucide-react";
+import { ArrowRight, Search, Gamepad, ShoppingCart, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
+import PriceAlertModal from "../components/PriceAlertModal";
 import { trackSectionVisit } from "../lib/db";
 import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -12,6 +13,8 @@ const packages = [
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '325 شدات', price: 4.44, service: 'PUBG 325 شدات' },
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '660 شدات', price: 8.50, service: 'PUBG 660 شدات' },
   { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '1800 شدات', price: 21.00, service: 'PUBG 1800 شدات' },
+  { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '3850 شدة', price: 43.00, service: 'PUBG 3850 شدة' },
+  { name: 'PUBG GLOBAL', icon: '🎮', color: 'from-yellow-500 to-yellow-600', package: '8100 شدة', price: 85.00, service: 'PUBG 8100 شدة' },
   { name: 'Jawaker', icon: '🃏', color: 'from-purple-500 to-purple-600', package: '10000 توكنز', price: 1.20, service: 'Jawaker 10000 توكنز' },
   { name: 'FREE FIRE', icon: '🔥', color: 'from-orange-500 to-orange-600', package: '100 جوهرة', price: 0.93, service: 'FREE FIRE 100 جوهرة' },
   { name: 'Call of Duty', icon: '🎯', color: 'from-gray-600 to-gray-700', package: '880 CP', price: 12.99, service: 'COD 880 CP' },
@@ -26,6 +29,8 @@ export default function Games() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedAlertService, setSelectedAlertService] = useState<{ key: string; category: string; currentPrice: number } | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -148,9 +153,28 @@ export default function Games() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-1">{pkg.name}</h3>
                 <p className="text-white/60 text-sm mb-4">{pkg.package}</p>
-                <p className="text-2xl font-black text-white mb-6">
-                  {isLoggedIn ? formatPrice(activePrice, currency) : "🔒 سجل الدخول لرؤية السعر"}
-                </p>
+                <div className="flex justify-center items-center gap-2 mb-6">
+                  <p className="text-2xl font-black text-white">
+                    {isLoggedIn ? formatPrice(activePrice, currency) : "🔒 سجل الدخول لرؤية السعر"}
+                  </p>
+                  {isLoggedIn && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAlertService({
+                          key: pkg.service,
+                          category: 'games',
+                          currentPrice: activePrice
+                        });
+                        setIsAlertModalOpen(true);
+                      }}
+                      className="p-1.5 bg-white/5 hover:bg-amber-500/10 text-white/50 hover:text-amber-400 border border-white/10 hover:border-amber-500/20 rounded-lg transition-all"
+                      title="مراقبة الأسعار"
+                    >
+                      <Bell size={14} />
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <span className="text-white/70 text-sm">الكمية:</span>
@@ -187,6 +211,19 @@ export default function Games() {
           onConfirm={confirmOrder}
           serviceName={selectedPackage.service}
           amount={selectedPackage.finalPrice}
+        />
+      )}
+
+      {selectedAlertService && (
+        <PriceAlertModal
+          isOpen={isAlertModalOpen}
+          onClose={() => {
+            setIsAlertModalOpen(false);
+            setSelectedAlertService(null);
+          }}
+          serviceKey={selectedAlertService.key}
+          category={selectedAlertService.category}
+          currentPrice={selectedAlertService.currentPrice}
         />
       )}
 

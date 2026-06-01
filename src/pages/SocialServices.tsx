@@ -1,8 +1,9 @@
-import { ArrowRight, Search, Music, Instagram, Send, Twitter, Video, Camera, Youtube, Facebook, ShieldCheck } from "lucide-react";
+import { ArrowRight, Search, Music, Instagram, Send, Twitter, Video, Camera, Youtube, Facebook, ShieldCheck, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import OrderModal from "../components/OrderModal";
+import PriceAlertModal from "../components/PriceAlertModal";
 import { trackSectionVisit } from "../lib/db";
 import { db, auth, onAuthStateChanged } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -48,6 +49,8 @@ export default function SocialServices() {
   const [currency, setCurrency] = useState<'USD' | 'SYP'>(getCurrency());
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedAlertService, setSelectedAlertService] = useState<{ key: string; category: string; currentPrice: number } | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -162,8 +165,28 @@ export default function SocialServices() {
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
                       <p className="text-white/60 text-sm mb-4">آمن وموثوق بنسبة 100%</p>
-                      <div className="bg-white/10 px-4 py-2 rounded-full inline-block text-blue-300 font-bold mb-6">
-                        {isLoggedIn ? `تبدأ من ${formatPrice(activePrice, currency)}` : "🔒 سجل الدخول لرؤية السعر"}
+                      <div className="flex justify-center items-center gap-2 mb-6">
+                        <div className="bg-white/10 px-4 py-2 rounded-full inline-block text-blue-300 font-bold">
+                          {isLoggedIn ? `تبدأ من ${formatPrice(activePrice, currency)}` : "🔒 سجل الدخول لرؤية السعر"}
+                        </div>
+                        {isLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAlertService({
+                                key: service.name,
+                                category: 'social',
+                                currentPrice: activePrice
+                              });
+                              setIsAlertModalOpen(true);
+                            }}
+                            className="p-2.5 bg-white/5 hover:bg-amber-500/10 text-white/50 hover:text-amber-400 border border-white/10 hover:border-amber-500/20 rounded-full transition-all"
+                            title="مراقبة الأسعار"
+                          >
+                            <Bell size={14} />
+                          </button>
+                        )}
                       </div>
                       <button className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl hover:bg-white/20 transition-all font-bold">
                         اطلب الآن
@@ -184,6 +207,19 @@ export default function SocialServices() {
           onConfirm={confirmOrder}
           serviceName={selectedService.name}
           amount={selectedService.price.toString()}
+        />
+      )}
+
+      {selectedAlertService && (
+        <PriceAlertModal
+          isOpen={isAlertModalOpen}
+          onClose={() => {
+            setIsAlertModalOpen(false);
+            setSelectedAlertService(null);
+          }}
+          serviceKey={selectedAlertService.key}
+          category={selectedAlertService.category}
+          currentPrice={selectedAlertService.currentPrice}
         />
       )}
 

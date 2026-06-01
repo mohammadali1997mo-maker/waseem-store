@@ -37,7 +37,7 @@ import {
   Download,
   Printer
 } from "lucide-react";
-import { formatPrice, getExchangeRate } from "../lib/currency";
+import { formatPrice, getExchangeRate, getCurrency } from "../lib/currency";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -365,7 +365,7 @@ export default function Profile() {
         });
       }
 
-      setWithdrawSuccess(`تم شحن رصيدك بنجاح! تم تقديم طلب سحب بقيمة ${amountNum} شدة إلى آيدي اللاعب ${withdrawPlayerId.trim()} وسيعالجه الدعم الفني فوراً.`);
+      setWithdrawSuccess(`تم تقديم طلب سحب بقيمة ${formatPrice(amountNum)} إلى آيدي اللاعب ${withdrawPlayerId.trim()} وسيعالجه الدعم الفني فوراً بنجاح.`);
       setWithdrawAmount("");
     } catch (err: any) {
       setWithdrawError(err.message || "عذراً، حدث خطأ أثناء الاتصال بمحفظة وسيم الكارد.");
@@ -675,10 +675,7 @@ export default function Profile() {
                       <div className="flex items-baseline gap-1.5 mt-1">
                         <span className={`text-2xl md:text-3xl font-black font-mono tracking-tight transition-colors ${
                           balanceFlash ? "text-emerald-400" : "text-amber-400"
-                        }`}>{ucBalance}</span>
-                        <span className={`text-xs font-black transition-colors ${
-                          balanceFlash ? "text-emerald-500" : "text-amber-500"
-                        }`}>UC</span>
+                        }`}>{formatPrice(ucBalance)}</span>
                       </div>
                     </div>
                   </div>
@@ -764,11 +761,13 @@ export default function Profile() {
 
                         {/* Amount to Withdraw */}
                         <div className="space-y-1">
-                          <label className="text-white/60 text-xs block font-bold mb-1">الكمية المراد سحبها (UC)</label>
+                          <label className="text-white/60 text-xs block font-bold mb-1">
+                            الكمية المراد سحبها ({getCurrency() === 'SYP' ? 'ل.س' : '$'})
+                          </label>
                           <div className="relative">
                             <input 
                               type="number" 
-                              placeholder="الحد الأدنى للسحب: 60"
+                              placeholder={getCurrency() === 'SYP' ? `الحد الأدنى للسحب: ${(60 * getExchangeRate()).toLocaleString()} ل.س` : "الحد الأدنى للسحب: $60"}
                               value={withdrawAmount}
                               onChange={(e) => setWithdrawAmount(e.target.value)}
                               className="w-full rounded-xl bg-black/40 border border-white/10 text-white px-4 py-3 text-sm font-mono focus:outline-none focus:border-amber-500/50 pr-10 text-right"

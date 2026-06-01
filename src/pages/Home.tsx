@@ -34,28 +34,34 @@ export default function Home() {
     }
   }, []);
 
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [userCode, setUserCode] = useState<string>('');
+
   useEffect(() => {
     const handleCurrencyChange = () => setCurrency(getCurrency());
     window.addEventListener('currencyChange', handleCurrencyChange);
     
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    let unsubUserDoc: (() => void) | null = null;
+    
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
         
-        // Fetch extra data like referralCode
         try {
           const { db } = await import("../lib/firebase");
-          const { doc, getDoc } = await import("firebase/firestore");
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            localStorage.setItem('wsimCode', data.referralCode || '');
-          }
-        } catch (fetchErr: any) {
-          if (!fetchErr.message?.includes('offline') && fetchErr.code !== 'unavailable') {
-            console.warn("Could not fetch user data:", fetchErr);
-          }
-          // Fallback to local storage if available
+          const { doc, onSnapshot } = await import("firebase/firestore");
+          
+          if (unsubUserDoc) unsubUserDoc();
+          unsubUserDoc = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              setUserBalance(data.ucBalance || 0);
+              setUserCode(data.referralCode || '');
+              localStorage.setItem('wsimCode', data.referralCode || '');
+            }
+          });
+        } catch (err) {
+          console.error("Could not listen to user doc:", err);
         }
 
         localStorage.setItem("wsimUser", JSON.stringify({
@@ -66,12 +72,22 @@ export default function Home() {
         logUser(user);
       } else {
         setCurrentUser(null);
+        setUserBalance(0);
+        setUserCode('');
+        if (unsubUserDoc) {
+          unsubUserDoc();
+          unsubUserDoc = null;
+        }
         localStorage.removeItem("wsimUser");
         localStorage.removeItem("wsimCode");
       }
     });
 
-    return () => unsub();
+    return () => {
+      window.removeEventListener('currencyChange', handleCurrencyChange);
+      unsubAuth();
+      if (unsubUserDoc) unsubUserDoc();
+    };
   }, []);
 
   const handleLogin = () => {
@@ -127,8 +143,8 @@ export default function Home() {
 
       <header className="py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <div className="text-center flex-1">
+          <div className="flex flex-col-reverse md:flex-row justify-between items-center gap-6">
+            <div className="text-center flex-1 w-full">
               <motion.h1 
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -136,9 +152,17 @@ export default function Home() {
               >
                 وسيم ستور
               </motion.h1>
-              <p className="text-white/80 text-lg">منصتك الموثوقة لجميع خدمات الشحن والتمويل</p>
+
+              {/* Beautiful Quranic Scrolling Ticker */}
+              <div className="w-full max-w-3xl mx-auto my-4 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/40 via-emerald-900/60 to-emerald-950/40 border border-emerald-500/30 py-3 px-3 md:px-6 shadow-lg shadow-emerald-900/15 relative">
+                <div className="whitespace-nowrap animate-marquee font-quran text-base sm:text-lg md:text-2xl text-emerald-300 tracking-wide font-medium select-none">
+                  ✨ ﴿ وَفِي السَّمَاءِ رِزْقُكُمْ وَمَا تُوعَدُونَ * فَوَرَبِّ السَّمَاءِ وَالْأَرْضِ إِنَّهُ لَحَقٌّ مِّثْلَ مَا أَنَّكُمْ تَنطِقُونَ ﴾ ✨
+                </div>
+              </div>
+
+              <p className="text-white/80 text-sm md:text-lg">منصتك الموثوقة لجميع خدمات الشحن والتمويل</p>
             </div>
-            <div className="flex gap-4 items-center">
+            <div className="flex w-full md:w-auto justify-between md:justify-end gap-4 items-center">
               <button 
                 onClick={toggleCurrency}
                 className="bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-xs font-bold flex items-center gap-2"
@@ -146,23 +170,27 @@ export default function Home() {
                 {currency === 'USD' ? '🇺🇸 Dollar' : '🇸🇾 ليرة سورية'}
               </button>
               {currentUser ? (
-                <div className="flex flex-col items-end gap-1 font-sans">
+                <div className="flex flex-col items-end gap-1.5 font-sans">
                   <button 
                     onClick={() => navigate('/profile')}
-                    className="bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border border-amber-500/30 text-amber-400 px-6 py-2 rounded-xl hover:border-amber-500/60 transition-all flex items-center gap-2 font-black shadow-lg shadow-amber-500/5 active:scale-95"
+                    className="bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border border-amber-500/30 text-amber-400 px-6 py-2 rounded-xl hover:border-amber-500/60 transition-all flex items-center gap-2 font-black shadow-lg shadow-amber-500/5 active:scale-95 text-xs sm:text-sm md:text-base whitespace-nowrap"
                   >
                     <User size={18} className="text-amber-400" />
                     <span>حسابي الشخصي</span>
                   </button>
-                  <div className="flex items-center gap-2 px-2">
+                  <div className="flex items-center gap-1.5 bg-amber-400/10 border border-amber-500/20 px-2 py-0.5 rounded-lg shrink-0">
+                    <span className="text-[10px] text-amber-200">رصيد محفظتي:</span>
+                    <span className="text-amber-400 font-mono text-[11px] sm:text-xs font-black">{formatPrice(userBalance, currency)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 shrink-0 opacity-70">
                     <span className="text-[9px] text-white/40 uppercase tracking-tighter">الكود:</span>
-                    <span className="text-blue-400 font-mono text-xs font-bold">{localStorage.getItem('wsimCode') || '...'}</span>
+                    <span className="text-blue-400 font-mono text-[11px] font-bold">{userCode || localStorage.getItem('wsimCode') || '...'}</span>
                   </div>
                 </div>
               ) : (
                 <button 
                   onClick={handleLogin}
-                  className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/20 transition-all flex items-center gap-2"
+                  className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/20 transition-all flex items-center gap-2 text-xs sm:text-sm md:text-base whitespace-nowrap"
                 >
                   <LogIn size={18} />
                   تسجيل الدخول
